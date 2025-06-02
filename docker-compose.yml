@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  plex-portal:
+    image: python:3.11-slim
+    container_name: plex-portal
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-change_this_in_production}
+      - DEBUG=False
+      - PLEX_SERVER_URL=${PLEX_SERVER_URL:-}
+      - PLEX_TOKEN=${PLEX_TOKEN:-}
+      - OVERSEERR_URL=${OVERSEERR_URL:-}
+      - OVERSEERR_API_KEY=${OVERSEERR_API_KEY:-}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USERNAME=${DB_USERNAME:-plex_portal}
+      - DB_PASSWORD=${DB_PASSWORD:-change_this_in_production}
+      - DB_NAME=${DB_NAME:-plex_portal_db}
+    volumes:
+      - plex-portal-data:/app/src/data
+    networks:
+      - plex-network
+    depends_on:
+      - db
+    command: >
+      bash -c "apt-get update && apt-get install -y --no-install-recommends git build-essential default-libmysqlclient-dev &&
+      git clone https://github.com/yourusername/plex-portal.git /app &&
+      cd /app &&
+      pip install --no-cache-dir -r requirements.txt &&
+      python -m src.main"
+
+  db:
+    image: mysql:8.0
+    container_name: plex-portal-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-change_this_in_production}
+      - MYSQL_DATABASE=${DB_NAME:-plex_portal_db}
+      - MYSQL_USER=${DB_USERNAME:-plex_portal}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-change_this_in_production}
+    volumes:
+      - plex-portal-db:/var/lib/mysql
+    networks:
+      - plex-network
+
+networks:
+  plex-network:
+    driver: bridge
+
+volumes:
+  plex-portal-db:
+  plex-portal-data:

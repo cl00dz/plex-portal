@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimal Plex Client Settings - Plex Portal</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Optimal Plex Client Settings Guide</h1>
+        
+        <div class="guide-intro">
+            <p>Welcome to our comprehensive guide for optimizing your Plex experience across various devices. This guide has been carefully compiled based on recommendations from <a href="https://mediaclients.wiki/" target="_blank">mediaclients.wiki</a>, a trusted resource for media client configuration. By following these device-specific settings, you'll ensure you're getting the highest possible quality streaming experience from your Plex server.</p>
+            
+            <p>For every Plex client out of the box, Plex sets the video quality at 720p by default. While this works well for most devices without issues, it means that your 1080p HD videos (or higher) are being transcoded down to a lower resolution. Transcoding is Plex's process of converting video and audio formats to ensure compatibility with your device, but it can affect picture quality and put additional load on the server. By optimizing your settings, you'll enjoy quicker loading times, faster video scrubbing (fast-forward/rewind), and the highest quality picture possible.</p>
+        </div>
+
+        <div class="device-section" id="android-tv">
+            <h2>Android TV Devices</h2>
+            <p>Android TV devices include the Nvidia Shield, Google Chromecast with Google TV, Xiaomi Mi Box, and any television running the Android TV or Google TV operating system. These devices offer excellent Plex playback capabilities when properly configured. To optimize your Android TV Plex experience, you'll need to access the settings menu within the Plex application.</p>
+            
+            <p>Begin by launching the Plex app on your Android TV device. Navigate to the bottom of the home screen where you'll find the "Settings" option. Select it to enter the configuration menu. Within Settings, locate and select the "Video Quality" section. The first setting you should adjust is "Quality Suggestions" - this should be toggled to OFF to prevent Plex from automatically adjusting your quality settings. Next, set "Adjust automatically" to OFF, "Home streaming" to MAXIMUM, and "Remote streaming" to MAXIMUM. These settings ensure your Android TV device will request the highest quality stream possible from your Plex server, minimizing unnecessary transcoding and delivering the best possible picture quality.</p>
+            
+            <p>The Nvidia Shield Pro is particularly well-regarded in the Plex community for its powerful hardware that can handle even the most demanding video formats with ease. If you're using a Shield device, these optimal settings will allow you to take full advantage of its capabilities, including support for 4K HDR content, advanced audio formats, and smooth playback of high-bitrate files.</p>
+        </div>
+
+        <div class="device-section" id="apple-tv">
+            <h2>Apple TV</h2>
+            <p>The Apple TV (particularly the 4K models) is considered one of the premier Plex client devices due to its powerful hardware and excellent media playback capabilities. To ensure you're getting the best possible experience from your Apple TV when streaming from Plex, you'll want to optimize several key settings.</p>
+            
+            <p>Start by opening the Plex app on your Apple TV device. Navigate to the bottom of the home screen where you'll find the "Settings" menu option. Once in the Settings menu, select "Video Quality" and then "Internet Streaming" to access the quality configuration options. For optimal performance, set "Auto Adjust Quality" to OFF - this prevents Plex from dynamically lowering your video quality. Then, set both "Local Quality" and "Remote Quality" to MAXIMUM. These settings ensure your Apple TV will always request the highest quality stream available, whether you're streaming from a local Plex server on your network or accessing your media remotely.</p>
+            
+            <p>The Apple TV 4K (especially the 3rd Generation model) consistently ranks as one of the top media streaming clients due to its excellent video processing capabilities, support for a wide range of formats, and smooth, responsive interface. With these optimized settings, you'll be able to enjoy your Plex content at its full quality, including 4K HDR content with advanced audio formats like Dolby Atmos when available.</p>
+        </div>
+
+        <div class="device-section" id="roku">
+            <h2>Roku Devices</h2>
+            <p>Roku streaming devices are among the most popular and accessible Plex clients available, with options ranging from budget-friendly streaming sticks to premium Ultra models. Regardless of which Roku model you own, optimizing your Plex settings will significantly enhance your viewing experience. The configuration process is straightforward and only takes a few moments to complete.</p>
+            
+            <p>To begin, launch the Plex application on your Roku device. Navigate to the bottom of the home screen where you'll find the "Settings" menu option. Select it to enter the configuration menu. Within Settings, locate and select the "Video" section to access the quality settings. For the best possible experience, set "Local Quality" to ORIGINAL and "Remote Quality" to ORIGINAL. These settings ensure your Roku will request the full-quality original files from your Plex server without any quality reduction. Additionally, set "Direct Play" to AUTO and ensure "Allow Direct Stream" is CHECKED. These options help minimize transcoding when possible, reducing server load and improving playback performance.</p>
+            
+            <p>Roku devices vary in their processing capabilities, with newer and higher-end models offering better support for advanced video formats. The Roku Ultra models are particularly well-suited for Plex, with powerful hardware that can handle most media formats without issues. If you're using an older or entry-level Roku device, you may occasionally need to reduce quality settings for particularly demanding content, but starting with these optimal settings will provide the best experience in most situations.</p>
+        </div>
+
+        <div class="device-section" id="plex-web">
+            <h2>Plex Web Player</h2>
+            <p>The Plex Web Player offers the convenience of accessing your Plex media library directly from any supported web browser, including Firefox, Chrome, Brave, Safari, and others. This flexibility makes it an excellent option when you want to watch your content on a computer or device without installing a dedicated Plex application. Setting up the optimal configuration for the Plex Web Player ensures you'll get the best possible streaming experience.</p>
+            
+            <p>To access the Plex Web Player, open your preferred browser and navigate to Plex.tv. Sign in to your Plex account, and you'll see an "OPEN PLEX" button appear. Click this button to launch the Plex Web Player in your current browser. Once the player is open, look for the settings icon in the upper right corner of the screen (it appears as a gear or cog symbol). Click this icon to access the settings menu. In the settings panel, look for the section labeled "Plex Media Player" on the left side, and select "Quality" from the options. Using the dropdown menu, set the "Video quality" to MAXIMUM. This setting ensures the web player will request the highest quality stream available from your Plex server.</p>
+            
+            <p>It's worth noting that the Plex Web Player's performance can vary depending on your browser and computer specifications. Modern browsers like Chrome, Firefox, and Edge generally offer the best compatibility with the Plex Web Player. Additionally, your computer's hardware will determine how well it can handle high-bitrate content, particularly for 4K or HDR media. If you experience playback issues with very high-quality content, you may need to adjust the quality setting downward temporarily, but starting with the maximum setting will provide the best experience in most situations.</p>
+        </div>
+
+        <div class="device-section" id="playstation">
+            <h2>PlayStation</h2>
+            <p>The PlayStation 4 and PlayStation 5 consoles both offer Plex applications that transform your gaming system into a capable media center. While gaming consoles aren't always optimized specifically for media playback, with the right settings, your PlayStation can deliver an excellent Plex experience. The configuration process requires navigating through a few menus, but only needs to be done once to ensure optimal quality.</p>
+            
+            <p>To begin, launch the Plex application on your PlayStation console. The settings menu is somewhat hidden - you'll need to look for your username at the top of the screen. Select your username to reveal a dropdown menu that includes the "Settings" option. Once in the Settings menu, navigate to the "Video" section to access the quality configuration options. For the best possible experience, set "Local Quality" to ORIGINAL and "Maximum Remote Quality" to UNLIMITED. These settings ensure your PlayStation will request the highest quality streams from your Plex server. Additionally, make sure both "Allow Direct Play" and "Allow Direct Stream" are CHECKED. These options help minimize unnecessary transcoding, improving playback performance and reducing the load on your Plex server.</p>
+            
+            <p>The PlayStation 5 offers improved media playback capabilities compared to the PlayStation 4, with better support for modern video formats and higher bitrates. However, both consoles can provide a good Plex experience with these optimized settings. One limitation to be aware of is that gaming consoles sometimes have more limited format support than dedicated media players, so some files may still require transcoding despite optimal settings. Nevertheless, starting with these recommended configurations will ensure you get the best possible quality for compatible content.</p>
+        </div>
+
+        <div class="device-section" id="additional-info">
+            <h2>Additional Information</h2>
+            <p>While the above settings are considered "optimal" for getting the highest quality picture from your Plex server to your device, it's important to understand that your actual experience may vary based on your network conditions and server capabilities. If you experience buffering or playback issues after applying these settings, you may need to step down to a lower quality profile temporarily. This is particularly true when streaming remotely over limited internet connections.</p>
+            
+            <p>For mobile devices like Android phones and tablets or iOS devices (iPhone and iPad), the Plex app requires a one-time activation fee of approximately $5 paid directly to Plex from within the app. Once activated on an iOS device, all iOS devices linked to your account will be unlocked. Similarly, activating on an Android device unlocks all Android devices on your account. The optimal settings for mobile devices follow similar principles to those outlined above, with quality settings ideally set to maximum or original for the best experience when your network conditions allow.</p>
+            
+            <p>Remember that the server owner has configured their Plex server to provide you with the best possible streaming experience. If you encounter persistent issues even after optimizing your client settings, reach out to the server owner for assistance. They may be able to help troubleshoot specific problems or recommend settings tailored to their particular server configuration.</p>
+        </div>
+
+        <div class="references">
+            <h2>References</h2>
+            <p>This guide was compiled with information from <a href="https://mediaclients.wiki/" target="_blank">mediaclients.wiki</a>, a comprehensive resource for media client configuration. Specific device guides referenced include:</p>
+            <ul>
+                <li><a href="https://mediaclients.wiki/en/Plex/AndroidTV" target="_blank">Android TV Settings Guide</a></li>
+                <li><a href="https://mediaclients.wiki/en/Plex/AppleTV" target="_blank">Apple TV Settings Guide</a></li>
+                <li><a href="https://mediaclients.wiki/en/Plex/Roku" target="_blank">Roku Settings Guide</a></li>
+                <li><a href="https://mediaclients.wiki/en/Plex/plexweb" target="_blank">Plex Web Player Settings Guide</a></li>
+                <li><a href="https://mediaclients.wiki/en/Plex/Playstation" target="_blank">PlayStation Settings Guide</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
