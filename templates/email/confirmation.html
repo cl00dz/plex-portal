@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confirm your subscription</title>
+<style>
+  body{margin:0;padding:0;background:#f0f0f0;font-family:'Segoe UI',Arial,sans-serif;}
+  .wrap{max-width:580px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  .hdr{background:#1e2022;padding:28px 32px;text-align:center;}
+  .hdr-title{color:#e5a00d;font-size:22px;font-weight:700;margin:8px 0 0;}
+  .hdr-icon{font-size:36px;}
+  .body{padding:32px;}
+  h2{color:#1a1c1e;margin:0 0 12px;font-size:20px;}
+  p{color:#555;line-height:1.6;margin:0 0 16px;}
+  .btn{display:block;width:fit-content;margin:24px auto;padding:14px 36px;background:#e5a00d;color:#fff!important;text-decoration:none;border-radius:9px;font-weight:700;font-size:16px;text-align:center;}
+  .note{font-size:12px;color:#aaa;text-align:center;margin-top:24px;}
+  .footer{background:#f9f9f9;border-top:1px solid #eee;padding:20px 32px;text-align:center;font-size:12px;color:#aaa;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <div class="hdr-icon">🎬</div>
+    <div class="hdr-title">{{ site_name }}</div>
+  </div>
+  <div class="body">
+    <h2>One quick step — confirm your email</h2>
+    <p>Hi {% if subscriber.name %}{{ subscriber.name }}{% else %}there{% endif %},</p>
+    <p>Thanks for subscribing to <strong>{{ site_name }}</strong> updates! Click the button below to confirm your email address and activate your subscription.</p>
+    <a class="btn" href="{{ confirm_url }}">✅ Confirm My Subscription</a>
+    <p class="note">If the button doesn't work, paste this link into your browser:<br>
+      <a href="{{ confirm_url }}" style="color:#e5a00d;word-break:break-all;">{{ confirm_url }}</a>
+    </p>
+    <p>You'll receive:</p>
+    <ul style="color:#555;line-height:1.8;">
+      {% if subscriber.notify_requests %}<li>🎬 A notification when your Overseerr requests become available on Plex</li>{% endif %}
+      {% if subscriber.notify_weekly %}<li>📅 A weekly digest of new additions and popular content</li>{% endif %}
+    </ul>
+    <p>If you didn't sign up for this, just ignore this email — nothing will happen.</p>
+  </div>
+  <div class="footer">
+    You're receiving this because someone signed up with this email at {{ site_name }}.
+  </div>
+</div>
+</body>
+</html>

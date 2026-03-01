@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Almost there! – {{ site_name }}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1a1c1e, #282a2d);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      width: 100%; max-width: 480px; overflow: hidden;
+    }
+    .card-hdr { background: #1e2022; padding: 24px 28px; display: flex; align-items: center; gap: 12px; }
+    .hdr-name { color: #e5a00d; font-size: 18px; font-weight: 700; }
+    .card-body { padding: 36px 28px; text-align: center; }
+    .big-icon { font-size: 56px; margin-bottom: 12px; }
+    h2 { font-size: 21px; color: #1a1c1e; margin-bottom: 10px; }
+    p { color: #555; line-height: 1.6; margin-bottom: 14px; font-size: 14px; }
+    .email-chip {
+      display: inline-block; background: #f2f2f2;
+      border-radius: 6px; padding: 4px 10px;
+      font-family: monospace; font-size: 14px; color: #333;
+    }
+    .notice {
+      background: #fff8e6; border: 1px solid #f0c040;
+      border-radius: 9px; padding: 14px 16px;
+      font-size: 13px; color: #7a5800;
+      margin-top: 16px; text-align: left;
+    }
+    .btn { display: inline-block; margin-top: 24px; padding: 11px 28px; background: #e5a00d; color: #fff; border-radius: 9px; font-weight: 700; font-size: 14px; text-decoration: none; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="card-hdr">
+    <span style="font-size:26px">🎬</span>
+    <span class="hdr-name">{{ site_name }}</span>
+  </div>
+  <div class="card-body">
+    {% if email_sent %}
+    <div class="big-icon">📬</div>
+    <h2>Check your inbox!</h2>
+    <p>We sent a confirmation email to:</p>
+    <p><span class="email-chip">{{ email }}</span></p>
+    <p>Click the link in that email to activate your subscription. Check your spam folder if it doesn't arrive within a few minutes.</p>
+    {% else %}
+    <div class="big-icon">✅</div>
+    <h2>You're signed up!</h2>
+    <p>Your email <span class="email-chip">{{ email }}</span> has been registered.</p>
+    {% if not mail_configured %}
+    <div class="notice">
+      ℹ️ <strong>Note:</strong> Email sending is not yet configured on this server.
+      The server admin needs to complete the email setup before confirmation emails can be sent.
+      Your subscription has been recorded — the admin can manually confirm it from the Newsletter Admin panel.
+    </div>
+    {% endif %}
+    {% endif %}
+    <a href="/" class="btn">Go to Portal</a>
+  </div>
+</div>
+</body>
+</html>

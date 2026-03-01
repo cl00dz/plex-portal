@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your request is ready!</title>
+<style>
+  body{margin:0;padding:0;background:#f0f0f0;font-family:'Segoe UI',Arial,sans-serif;}
+  .wrap{max-width:580px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  .hdr{background:#1e2022;padding:28px 32px;text-align:center;}
+  .hdr-icon{font-size:36px;}
+  .hdr-title{color:#e5a00d;font-size:22px;font-weight:700;margin:8px 0 0;}
+  .body{padding:32px;}
+  .hero{text-align:center;padding:8px 0 24px;}
+  .hero-badge{display:inline-block;background:#28a745;color:#fff;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:700;margin-bottom:12px;}
+  .hero h2{font-size:24px;color:#1a1c1e;margin:0 0 8px;}
+  .hero .type{font-size:13px;color:#888;text-transform:uppercase;letter-spacing:.05em;}
+  .poster-wrap{text-align:center;margin:16px 0 24px;}
+  .poster-wrap img{max-width:160px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+  .btn{display:block;width:fit-content;margin:0 auto 24px;padding:14px 36px;background:#e5a00d;color:#fff!important;text-decoration:none;border-radius:9px;font-weight:700;font-size:15px;}
+  p{color:#555;line-height:1.6;margin:0 0 14px;}
+  .footer{background:#f9f9f9;border-top:1px solid #eee;padding:16px 32px;text-align:center;font-size:12px;color:#aaa;}
+  .footer a{color:#aaa;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <div class="hdr-icon">🎬</div>
+    <div class="hdr-title">{{ site_name }}</div>
+  </div>
+  <div class="body">
+    <div class="hero">
+      <div class="hero-badge">✅ Now Available on Plex</div>
+      <h2>{{ media_title }}</h2>
+      <div class="type">{{ 'Movie' if media_type == 'movie' else 'TV Show' }}</div>
+    </div>
+
+    {% if poster_url %}
+    <div class="poster-wrap">
+      <img src="{{ poster_url }}" alt="{{ media_title }} poster">
+    </div>
+    {% endif %}
+
+    <p>Hi {% if subscriber.name %}{{ subscriber.name }}{% else %}there{% endif %},</p>
+    <p>Great news! <strong>{{ media_title }}</strong> — which you requested — is now available to watch on Plex. Grab some popcorn! 🍿</p>
+
+    {% if plex_url and plex_url != '#' %}
+    <a class="btn" href="{{ plex_url }}">▶ Watch on Plex Now</a>
+    {% endif %}
+
+    <p style="font-size:13px;color:#aaa;text-align:center;">
+      You're receiving this because you requested this title and are subscribed to request notifications on {{ site_name }}.
+    </p>
+  </div>
+  <div class="footer">
+    <a href="{{ unsub_url }}">Unsubscribe</a> · {{ site_name }}
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unsubscribed – {{ site_name }}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1a1c1e, #282a2d);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      width: 100%; max-width: 440px; overflow: hidden;
+    }
+    .card-hdr { background: #1e2022; padding: 24px 28px; display: flex; align-items: center; gap: 12px; }
+    .hdr-name { color: #e5a00d; font-size: 18px; font-weight: 700; }
+    .card-body { padding: 36px 28px; text-align: center; }
+    .icon { font-size: 56px; margin-bottom: 12px; }
+    h2 { font-size: 20px; color: #1a1c1e; margin-bottom: 10px; }
+    p { color: #555; line-height: 1.6; font-size: 14px; margin-bottom: 12px; }
+    .email { font-family: monospace; background: #f2f2f2; border-radius: 5px; padding: 2px 8px; }
+    .btn { display: inline-block; margin-top: 16px; padding: 11px 28px; background: #e5a00d; color: #fff; border-radius: 9px; font-weight: 700; font-size: 14px; text-decoration: none; }
+    .re-sub { margin-top: 12px; font-size: 13px; color: #aaa; }
+    .re-sub a { color: #e5a00d; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="card-hdr">
+    <span style="font-size:26px">🎬</span>
+    <span class="hdr-name">{{ site_name }}</span>
+  </div>
+  <div class="card-body">
+    {% if success %}
+    <div class="icon">👋</div>
+    <h2>You've been unsubscribed</h2>
+    <p><span class="email">{{ email }}</span> has been removed from all {{ site_name }} emails.</p>
+    <p>You won't receive any more emails from us. Changed your mind?</p>
+    <a href="/newsletter/subscribe" class="btn">Re-subscribe</a>
+    {% else %}
+    <div class="icon">❌</div>
+    <h2>Link not valid</h2>
+    <p>{{ message }}</p>
+    {% endif %}
+    <p class="re-sub"><a href="/">Return to portal</a></p>
+  </div>
+</div>
+</body>
+</html>

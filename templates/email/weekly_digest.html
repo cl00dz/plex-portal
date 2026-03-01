@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Weekly Plex Update</title>
+<style>
+  body{margin:0;padding:0;background:#f0f0f0;font-family:'Segoe UI',Arial,sans-serif;}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  .hdr{background:#1e2022;padding:28px 32px;text-align:center;}
+  .hdr-icon{font-size:36px;}
+  .hdr-title{color:#e5a00d;font-size:22px;font-weight:700;margin:8px 0 4px;}
+  .hdr-date{color:#888;font-size:13px;}
+  .body{padding:28px 32px;}
+  .greeting{color:#555;line-height:1.6;margin-bottom:24px;}
+  .section-title{font-size:16px;font-weight:700;color:#1a1c1e;margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid #e5a00d;display:flex;align-items:center;gap:8px;}
+  .lib-name{font-size:13px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin:20px 0 10px;}
+  .items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+  .item-card{border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;}
+  .item-poster{width:100%;aspect-ratio:2/3;object-fit:cover;background:#ddd;display:block;}
+  .item-poster-placeholder{width:100%;aspect-ratio:2/3;background:linear-gradient(135deg,#282a2d,#3a3d42);display:flex;align-items:center;justify-content:center;font-size:32px;}
+  .item-info{padding:8px 10px;}
+  .item-title{font-size:13px;font-weight:700;color:#1a1c1e;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .item-year{font-size:11px;color:#888;}
+  .item-summary{font-size:11px;color:#777;line-height:1.4;margin-top:4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .req-list{list-style:none;padding:0;margin:0 0 24px;}
+  .req-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;}
+  .req-item:last-child{border-bottom:none;}
+  .req-poster{width:40px;height:60px;border-radius:4px;object-fit:cover;background:#ddd;flex-shrink:0;}
+  .req-poster-ph{width:40px;height:60px;border-radius:4px;background:#282a2d;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .req-title{font-weight:600;color:#1a1c1e;font-size:14px;}
+  .req-type{font-size:11px;color:#888;text-transform:capitalize;}
+  .empty-note{color:#aaa;font-style:italic;font-size:14px;padding:12px 0;}
+  .footer{background:#f9f9f9;border-top:1px solid #eee;padding:20px 32px;text-align:center;font-size:12px;color:#aaa;}
+  .footer a{color:#aaa;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Header -->
+  <div class="hdr">
+    <div class="hdr-icon">🎬</div>
+    <div class="hdr-title">{{ site_name }}</div>
+    <div class="hdr-date">Weekly Update · {{ digest_date }}</div>
+  </div>
+
+  <div class="body">
+    <p class="greeting">
+      Hi {% if subscriber.name %}{{ subscriber.name }}{% else %}there{% endif %},<br>
+      Here's what's new and popular on your Plex server this week!
+    </p>
+
+    <!-- ── New This Week ─────────────────────────────────────── -->
+    <div class="section-title">🆕 New This Week</div>
+
+    {% if plex_content %}
+      {% for lib_name, lib_data in plex_content.items() %}
+        {% if lib_data.items %}
+          <div class="lib-name">{{ lib_name }}</div>
+          <div class="items-grid">
+            {% for item in lib_data.items %}
+            <div class="item-card">
+              {% if item.thumb %}
+                <img class="item-poster" src="{{ item.thumb }}" alt="{{ item.title }}">
+              {% else %}
+                <div class="item-poster-placeholder">
+                  {{ '🎬' if lib_data.type == 'movie' else '📺' }}
+                </div>
+              {% endif %}
+              <div class="item-info">
+                <div class="item-title">{{ item.title }}</div>
+                <div class="item-year">{{ item.year }}</div>
+                {% if item.summary %}
+                <div class="item-summary">{{ item.summary }}</div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <p class="empty-note">No new content was added to Plex this week.</p>
+    {% endif %}
+
+    <!-- ── Recently Fulfilled Requests ──────────────────────── -->
+    {% if ov_fulfilled %}
+    <div class="section-title">✅ Now Available (from Requests)</div>
+    <ul class="req-list">
+      {% for item in ov_fulfilled %}
+      <li class="req-item">
+        {% if item.poster %}
+          <img class="req-poster" src="{{ item.poster }}" alt="{{ item.title }}">
+        {% else %}
+          <div class="req-poster-ph">{{ '🎬' if item.type == 'movie' else '📺' }}</div>
+        {% endif %}
+        <div>
+          <div class="req-title">{{ item.title }}</div>
+          <div class="req-type">{{ item.type }}</div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <p style="font-size:13px;color:#aaa;text-align:center;margin-top:8px;">
+      Enjoy your watching! See something you'd like that's not there yet?<br>
+      Submit a request through the portal and it'll be added soon.
+    </p>
+  </div>
+
+  <div class="footer">
+    <a href="{{ unsub_url }}">Unsubscribe</a> · {{ site_name }} Weekly Digest
+  </div>
+</div>
+</body>
+</html>

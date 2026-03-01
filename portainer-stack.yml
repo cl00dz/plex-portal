@@ -11,9 +11,14 @@
 #  4. Scroll down to "Environment variables" and fill in:
 #       DB_PASSWORD          (any strong password)
 #       MYSQL_ROOT_PASSWORD  (any strong password)
+#       PORTAL_URL           (http://<your-server-ip>:5000)
 #  5. Click "Deploy the stack"
 #  6. Visit http://<your-server-ip>:5000 — the setup wizard
-#     will walk you through the rest in ~2 minutes.
+#     will walk you through Plex, Overseerr, and Email (SMTP)
+#     configuration in ~3 minutes.
+#  7. (Optional) Fill in SMTP_* vars now to enable newsletter
+#     emails immediately on first boot — or configure them
+#     later via the wizard or Newsletter → Admin panel.
 #
 #  UPDATING
 #  ────────
@@ -60,6 +65,24 @@ services:
       - PLEX_TOKEN=
       - OVERSEERR_URL=
       - OVERSEERR_API_KEY=
+
+      # ── Email / Newsletter (optional) ──────────────────────
+      # Leave blank to configure via the setup wizard (Step 4).
+      # Required to send confirmation emails, request notifications,
+      # and weekly digests. Gmail example: smtp.gmail.com / port 587
+      - SMTP_HOST=
+      - SMTP_PORT=587
+      - SMTP_USERNAME=
+      - SMTP_PASSWORD=
+      - SMTP_FROM_NAME=Plex Portal
+      - SMTP_FROM_EMAIL=
+      # Generate a random secret for Overseerr webhook auth:
+      #   python3 -c "import secrets; print(secrets.token_urlsafe(24))"
+      # Or use the "Generate" button in the setup wizard Step 4.
+      - NEWSLETTER_WEBHOOK_SECRET=
+      # Set to your portal's public URL so email links work correctly
+      # e.g. http://192.168.1.10:5000  or  https://plex.yourdomain.com
+      - PORTAL_URL=
 
       # ── Database ───────────────────────────────────────────
       - DB_HOST=db

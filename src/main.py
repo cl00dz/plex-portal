@@ -7,12 +7,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, redirect, jsonify
 from src.models.user import db
+from src.models.newsletter import Subscriber  # ensures newsletter table is created
 from src.routes.user import user_bp
 from src.routes.plex import plex_bp
 from src.routes.auth import auth_bp
 from src.routes.guides import guides_bp
 from src.routes.setup import setup_bp
-from src.extensions import limiter
+from src.routes.newsletter import newsletter_bp
+from src.extensions import limiter, mail
 
 # ---------------------------------------------------------------------------
 # Data directory (persistent across restarts via Docker volume)
@@ -32,8 +34,12 @@ def load_config_from_file():
     try:
         with open(config_file, 'r') as f:
             config = json.load(f)
-        allowed = {'PLEX_SERVER_URL', 'PLEX_TOKEN', 'OVERSEERR_URL',
-                   'OVERSEERR_API_KEY', 'SITE_NAME', 'ADMIN_EMAIL'}
+        allowed = {
+            'PLEX_SERVER_URL', 'PLEX_TOKEN', 'OVERSEERR_URL', 'OVERSEERR_API_KEY',
+            'SITE_NAME', 'ADMIN_EMAIL', 'PORTAL_URL',
+            'SMTP_HOST', 'SMTP_PORT', 'SMTP_USERNAME', 'SMTP_PASSWORD',
+            'SMTP_FROM_NAME', 'SMTP_FROM_EMAIL', 'NEWSLETTER_WEBHOOK_SECRET',
+        }
         for key, value in config.items():
             if key.upper() in allowed and value:
                 os.environ[key.upper()] = value
@@ -44,19 +50,16 @@ def load_config_from_file():
 
 
 def is_setup_complete():
-    setup_file = os.path.join(data_dir, 'setup_complete.json')
-    return os.path.exists(setup_file)
+    return os.path.exists(os.path.join(data_dir, 'setup_complete.json'))
 
 
 def get_or_create_secret_key():
     """
     Return a persistent SECRET_KEY.
     Priority: SECRET_KEY env var → persisted key file → freshly generated key.
-    A generated key is saved to the data volume so sessions survive restarts.
     """
     env_key = os.environ.get('SECRET_KEY', '')
-    placeholders = {'change_this_in_production', 'asdf#FGSgvasgf$5$WGT', ''}
-    if env_key not in placeholders:
+    if env_key and env_key not in {'change_this_in_production', 'asdf#FGSgvasgf$5$WGT'}:
         return env_key
 
     key_file = os.path.join(data_dir, 'secret_key')
@@ -77,7 +80,7 @@ def get_or_create_secret_key():
 
 
 # ---------------------------------------------------------------------------
-# Load persisted config before creating the app (so blueprints can read envs)
+# Load persisted config before creating the app
 # ---------------------------------------------------------------------------
 load_config_from_file()
 
@@ -99,6 +102,17 @@ app.config.update(
     SESSION_COOKIE_SAMESITE='Lax',
     PERMANENT_SESSION_LIFETIME=3600,
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    # Flask-Mail — reads SMTP settings from environment at request time
+    MAIL_SERVER=os.environ.get('SMTP_HOST', ''),
+    MAIL_PORT=int(os.environ.get('SMTP_PORT', 587)),
+    MAIL_USE_TLS=os.environ.get('SMTP_TLS', 'true').lower() != 'false',
+    MAIL_USERNAME=os.environ.get('SMTP_USERNAME', ''),
+    MAIL_PASSWORD=os.environ.get('SMTP_PASSWORD', ''),
+    MAIL_DEFAULT_SENDER=(
+        os.environ.get('SMTP_FROM_NAME', 'Plex Portal'),
+        os.environ.get('SMTP_FROM_EMAIL',
+                       os.environ.get('SMTP_USERNAME', 'noreply@plexportal.local')),
+    ),
 )
 
 # ---------------------------------------------------------------------------
@@ -125,15 +139,17 @@ with app.app_context():
 # Extensions
 # ---------------------------------------------------------------------------
 limiter.init_app(app)
+mail.init_app(app)
 
 # ---------------------------------------------------------------------------
 # Blueprints
 # ---------------------------------------------------------------------------
-app.register_blueprint(user_bp,  url_prefix='/api')
-app.register_blueprint(plex_bp,  url_prefix='/api/plex')
-app.register_blueprint(auth_bp,  url_prefix='/api/auth')
-app.register_blueprint(guides_bp, url_prefix='/api/guides')
-app.register_blueprint(setup_bp,  url_prefix='/api/setup')
+app.register_blueprint(user_bp,       url_prefix='/api')
+app.register_blueprint(plex_bp,       url_prefix='/api/plex')
+app.register_blueprint(auth_bp,       url_prefix='/api/auth')
+app.register_blueprint(guides_bp,     url_prefix='/api/guides')
+app.register_blueprint(setup_bp,      url_prefix='/api/setup')
+app.register_blueprint(newsletter_bp, url_prefix='/newsletter')
 
 # ---------------------------------------------------------------------------
 # Security headers on every response
@@ -145,7 +161,6 @@ def add_security_headers(response):
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
-    # Remove Flask/Werkzeug server banner
     response.headers.pop('Server', None)
     return response
 
@@ -154,7 +169,47 @@ def add_security_headers(response):
 # ---------------------------------------------------------------------------
 @app.route('/api/health')
 def health():
-    return jsonify({'status': 'ok', 'setup_complete': is_setup_complete()})
+    return jsonify({
+        'status': 'ok',
+        'setup_complete': is_setup_complete(),
+        'mail_configured': bool(os.environ.get('SMTP_HOST')),
+    })
+
+# ---------------------------------------------------------------------------
+# Newsletter scheduler  (weekly digest every Friday at 9 AM)
+# Runs in the Gunicorn master process when --preload is used; in the single
+# process when started with `python -m src.main`.
+# ---------------------------------------------------------------------------
+_scheduler_started = False
+
+def _start_newsletter_scheduler():
+    global _scheduler_started
+    if _scheduler_started:
+        return
+    _scheduler_started = True
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+
+        scheduler = BackgroundScheduler(daemon=True)
+
+        def _weekly_job():
+            with app.app_context():
+                from src.routes.newsletter import send_all_weekly_digests
+                count = send_all_weekly_digests()
+                print(f"[scheduler] Weekly digest sent to {count} subscriber(s)")
+
+        scheduler.add_job(_weekly_job, 'cron',
+                          day_of_week='fri', hour=9, minute=0,
+                          id='weekly_digest', replace_existing=True)
+        scheduler.start()
+        print("[scheduler] Newsletter scheduler started — weekly digest: Fridays 09:00")
+
+        import atexit
+        atexit.register(lambda: scheduler.shutdown(wait=False))
+    except Exception as e:
+        print(f"[scheduler] Could not start newsletter scheduler: {e}")
+
+_start_newsletter_scheduler()
 
 # ---------------------------------------------------------------------------
 # SPA catch-all route
@@ -162,8 +217,10 @@ def health():
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    # Gate everything behind the setup wizard on first run
-    if not is_setup_complete() and not path.startswith('api/setup'):
+    # Newsletter and setup routes bypass the setup gate
+    if (not is_setup_complete()
+            and not path.startswith('api/setup')
+            and not path.startswith('newsletter')):
         return redirect('/api/setup/setup')
 
     static_folder_path = app.static_folder

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Newsletter Admin – {{ site_name }}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f4f4f4; color: #333; }
+
+    /* ── Top nav ── */
+    .topbar {
+      background: #1e2022; padding: 14px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .topbar-brand span:first-child { font-size: 22px; }
+    .topbar-brand .name { color: #e5a00d; font-weight: 700; font-size: 16px; }
+    .topbar-links { display: flex; gap: 18px; }
+    .topbar-links a { color: #ccc; font-size: 13px; text-decoration: none; transition: color .15s; }
+    .topbar-links a:hover { color: #e5a00d; }
+
+    /* ── Page content ── */
+    .page { max-width: 1100px; margin: 28px auto; padding: 0 20px 60px; }
+    h1 { font-size: 24px; margin-bottom: 4px; }
+    .page-sub { color: #777; font-size: 14px; margin-bottom: 28px; }
+
+    /* ── Stats row ── */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border-radius: 10px; padding: 20px 22px; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+    .stat-num  { font-size: 32px; font-weight: 700; color: #e5a00d; }
+    .stat-label{ font-size: 13px; color: #888; margin-top: 4px; }
+
+    /* ── Status / actions row ── */
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+    @media (max-width: 700px) { .row-2 { grid-template-columns: 1fr; } }
+
+    .panel { background: #fff; border-radius: 10px; padding: 22px 24px; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+    .panel-title { font-size: 15px; font-weight: 700; color: #1a1c1e; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #e5a00d; }
+
+    /* Status badges */
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; }
+    .badge-ok  { background: #e8f5e9; color: #1a8a37; }
+    .badge-err { background: #fce8e8; color: #c0392b; }
+
+    .config-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid #f0f0f0; font-size: 13.5px; }
+    .config-row:last-child { border-bottom: none; }
+    .config-label { color: #555; font-weight: 600; }
+    .config-val { color: #888; font-family: monospace; font-size: 12px; word-break: break-all; text-align: right; max-width: 60%; }
+    .copy-btn { background: #f2f2f2; border: none; border-radius: 5px; padding: 3px 8px; font-size: 11px; cursor: pointer; margin-left: 6px; }
+    .copy-btn:hover { background: #e5a00d; color: #fff; }
+
+    /* ── Quick actions ── */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12.5px; font-weight: 600; color: #555; margin-bottom: 5px; }
+    .field input {
+      width: 100%; padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px;
+      font-size: 13px; font-family: inherit; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .field input:focus { border-color: #e5a00d; box-shadow: 0 0 0 3px rgba(229,160,13,.15); }
+
+    .btn { padding: 9px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .15s, transform .1s; }
+    .btn-orange { background: #e5a00d; color: #fff; }
+    .btn-orange:hover { background: #c98c00; transform: translateY(-1px); }
+    .btn-outline { background: transparent; border: 1.5px solid #ddd; color: #555; }
+    .btn-outline:hover { background: #f5f5f5; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .action-msg { margin-top: 10px; font-size: 13px; min-height: 20px; }
+    .action-msg.ok   { color: #1a8a37; }
+    .action-msg.fail { color: #c0392b; }
+
+    /* ── Subscribers table ── */
+    .table-wrap { background: #fff; border-radius: 10px; padding: 22px 24px; box-shadow: 0 2px 8px rgba(0,0,0,.07); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 9px 12px; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; border-bottom: 2px solid #eee; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f5f5f5; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    .sub-name { font-weight: 600; color: #1a1c1e; }
+    .sub-email { color: #555; font-size: 12px; }
+    .pref-chip { display: inline-block; background: #e8f5e9; color: #1a8a37; border-radius: 3px; padding: 2px 5px; font-size: 10px; font-weight: 600; margin: 1px; }
+    .pref-chip.off { background: #f2f2f2; color: #aaa; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .status-dot.on  { background: #28a745; }
+    .status-dot.off { background: #dc3545; }
+    .del-btn { background: none; border: none; cursor: pointer; color: #ccc; font-size: 15px; transition: color .15s; }
+    .del-btn:hover { color: #dc3545; }
+    .empty-row td { text-align: center; color: #aaa; padding: 32px; font-style: italic; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid #ddd; border-top-color: #e5a00d; border-radius: 50%; animation: spin .65s linear infinite; vertical-align: middle; margin-right: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <span>🎬</span>
+    <span class="name">{{ site_name }}</span>
+    <span style="color:#555;font-size:13px">/ Newsletter Admin</span>
+  </div>
+  <div class="topbar-links">
+    <a href="/newsletter/guide">📖 Setup Guide</a>
+    <a href="/newsletter/subscribe">👤 Subscribe Page</a>
+    <a href="/">← Portal Home</a>
+  </div>
+</div>
+
+<div class="page">
+  <h1>Newsletter Admin</h1>
+  <p class="page-sub">Manage subscribers, view configuration, and send emails.</p>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-num">{{ total }}</div>
+      <div class="stat-label">Total subscribers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ confirmed }}</div>
+      <div class="stat-label">Confirmed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ total - confirmed }}</div>
+      <div class="stat-label">Pending confirmation</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:{% if smtp_configured %}#28a745{% else %}#dc3545{% endif %}">
+        {{ '✓' if smtp_configured else '✗' }}
+      </div>
+      <div class="stat-label">Email configured</div>
+    </div>
+  </div>
+
+  <div class="row-2">
+    <!-- Configuration status -->
+    <div class="panel">
+      <div class="panel-title">⚙️ Configuration</div>
+
+      <div class="config-row">
+        <span class="config-label">SMTP</span>
+        {% if smtp_configured %}
+          <span class="badge badge-ok">✓ Configured ({{ smtp_host }})</span>
+        {% else %}
+          <span class="badge badge-err">✗ Not configured</span>
+        {% endif %}
+      </div>
+
+      <div class="config-row">
+        <span class="config-label">Subscribe URL</span>
+        <span>
+          <span class="config-val" id="sub-url">{{ subscribe_url }}</span>
+          <button class="copy-btn" onclick="copy('sub-url', this)">Copy</button>
+        </span>
+      </div>
+
+      <div class="config-row">
+        <span class="config-label">Overseerr Webhook URL</span>
+        <span>
+          <span class="config-val" id="wh-url">{{ webhook_url }}</span>
+          <button class="copy-btn" onclick="copy('wh-url', this)">Copy</button>
+        </span>
+      </div>
+
+      {% if webhook_secret %}
+      <div class="config-row">
+        <span class="config-label">Webhook Secret</span>
+        <span>
+          <span class="config-val" id="wh-sec">{{ webhook_secret }}</span>
+          <button class="copy-btn" onclick="copy('wh-sec', this)">Copy</button>
+        </span>
+      </div>
+      {% endif %}
+
+      {% if not smtp_configured %}
+      <div style="margin-top:14px;padding:10px 12px;background:#fff8e6;border-radius:7px;font-size:12.5px;color:#7a5800;">
+        ⚠️ SMTP is not configured. <a href="/api/setup/setup" style="color:#e5a00d;">Re-run the setup wizard</a> to add email settings.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Quick actions -->
+    <div class="panel">
+      <div class="panel-title">🚀 Quick Actions</div>
+
+      <div class="field">
+        <label for="test-email-addr">Send Test Email</label>
+        <input type="email" id="test-email-addr" placeholder="recipient@example.com">
+      </div>
+      <button class="btn btn-orange" onclick="sendTest()">Send Test</button>
+      <div class="action-msg" id="test-msg"></div>
+
+      <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+
+      <p style="font-size:13px;color:#666;margin-bottom:12px;">
+        Manually send this week's digest to all confirmed subscribers right now.
+      </p>
+      <button class="btn btn-outline" id="btn-weekly" onclick="triggerWeekly()">📅 Send Weekly Digest Now</button>
+      <div class="action-msg" id="weekly-msg"></div>
+    </div>
+  </div>
+
+  <!-- Subscribers table -->
+  <div class="table-wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="panel-title" style="border:none;margin:0;padding:0">👥 Subscribers</div>
+      <a href="/newsletter/subscribe" target="_blank" style="font-size:13px;color:#e5a00d;">+ Share Subscribe Link ↗</a>
+    </div>
+
+    <table id="sub-table">
+      <thead>
+        <tr>
+          <th>Name / Email</th>
+          <th>Plex Username</th>
+          <th>Notifications</th>
+          <th>Status</th>
+          <th>Joined</th>
+          <th>Last Emailed</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if subscribers %}
+          {% for s in subscribers %}
+          <tr id="row-{{ s.id }}">
+            <td>
+              <div class="sub-name">{{ s.name or '—' }}</div>
+              <div class="sub-email">{{ s.email }}</div>
+            </td>
+            <td style="color:#555;font-size:12px">{{ s.plex_username or '—' }}</td>
+            <td>
+              <span class="pref-chip {% if not s.notify_requests %}off{% endif %}">🎬 Requests</span>
+              <span class="pref-chip {% if not s.notify_weekly %}off{% endif %}">📅 Weekly</span>
+            </td>
+            <td>
+              <span class="status-dot {{ 'on' if s.confirmed else 'off' }}"></span>
+              {{ 'Confirmed' if s.confirmed else 'Pending' }}
+            </td>
+            <td style="color:#888;font-size:12px">
+              {{ s.created_at.strftime('%b %d, %Y') if s.created_at else '—' }}
+            </td>
+            <td style="color:#888;font-size:12px">
+              {{ s.last_emailed_at.strftime('%b %d') if s.last_emailed_at else '—' }}
+            </td>
+            <td>
+              <button class="del-btn" title="Remove subscriber" onclick="deleteSubscriber({{ s.id }})">✕</button>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr class="empty-row"><td colspan="7">No subscribers yet — share the subscribe link to get started.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  function copy(id, btn) {
+    const text = document.getElementById(id).textContent.trim();
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    });
+  }
+
+  async function sendTest() {
+    const email = document.getElementById('test-email-addr').value.trim();
+    const msg   = document.getElementById('test-msg');
+    if (!email) { setMsg(msg, 'fail', 'Enter an email address'); return; }
+    setMsg(msg, '', '<span class="spinner"></span> Sending…');
+    try {
+      const r = await post('/newsletter/send-test', { email });
+      setMsg(msg, r.success ? 'ok' : 'fail', (r.success ? '✓ ' : '✗ ') + r.message);
+    } catch { setMsg(msg, 'fail', '✗ Network error'); }
+  }
+
+  async function triggerWeekly() {
+    const btn = document.getElementById('btn-weekly');
+    const msg = document.getElementById('weekly-msg');
+    btn.disabled = true;
+    setMsg(msg, '', '<span class="spinner"></span> Sending…');
+    try {
+      const r = await post('/newsletter/send-weekly', {});
+      setMsg(msg, r.success ? 'ok' : 'fail', (r.success ? '✓ ' : '✗ ') + r.message);
+    } catch { setMsg(msg, 'fail', '✗ Network error'); }
+    btn.disabled = false;
+  }
+
+  async function deleteSubscriber(id) {
+    if (!confirm('Remove this subscriber?')) return;
+    try {
+      const r = await fetch(`/newsletter/subscriber/${id}`, { method: 'DELETE' });
+      if ((await r.json()).success) {
+        const row = document.getElementById('row-' + id);
+        if (row) row.remove();
+      }
+    } catch { alert('Could not delete subscriber.'); }
+  }
+
+  function setMsg(el, type, html) {
+    el.className = 'action-msg ' + type;
+    el.innerHTML = html;
+  }
+
+  async function post(url, body) {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return r.json();
+  }
+</script>
+</body>
+</html>

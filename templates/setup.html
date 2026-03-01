@@ -278,6 +278,10 @@
       </div>
       <div class="step-tab" id="tab-4">
         <div class="step-bubble" id="bub-4">4</div>
+        <span class="step-label">Email</span>
+      </div>
+      <div class="step-tab" id="tab-5">
+        <div class="step-bubble" id="bub-5">5</div>
         <span class="step-label">Finish</span>
       </div>
     </div>
@@ -377,8 +381,73 @@
       </div>
     </div>
 
-    <!-- Step 4 – Finish -->
+    <!-- Step 4 – Email (Optional) -->
     <div class="panel" id="panel-4">
+      <h2 class="panel-title">📧 Email Notifications <span style="font-size:14px;font-weight:400;color:#888">(optional)</span></h2>
+      <p class="panel-sub">
+        Set up SMTP so users can get notified when their requests are ready and receive
+        weekly digests of new content. You can skip this and configure it later.
+      </p>
+
+      <div style="background:#f9f9f9;border-radius:9px;padding:12px 14px;margin-bottom:18px;font-size:13px;color:#666">
+        💡 Need help? See the <a href="/newsletter/guide" target="_blank" style="color:#e5a00d">full email setup guide ↗</a> — includes Gmail, Outlook, and custom SMTP instructions.
+      </div>
+
+      <div class="field">
+        <div class="field-label">SMTP Host <span class="badge badge-opt">Optional</span></div>
+        <input type="text" id="smtp_host" placeholder="smtp.gmail.com" autocomplete="off" spellcheck="false">
+        <p class="field-hint">e.g. <code>smtp.gmail.com</code> for Gmail, <code>smtp.office365.com</code> for Outlook</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="field">
+          <div class="field-label">Port</div>
+          <input type="number" id="smtp_port" placeholder="587" value="587" min="1" max="65535">
+          <p class="field-hint">Usually 587 (TLS)</p>
+        </div>
+        <div class="field">
+          <div class="field-label">From Name</div>
+          <input type="text" id="smtp_from_name" placeholder="My Plex Server" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">SMTP Username (Email Address)</div>
+        <input type="email" id="smtp_username" placeholder="notifications@gmail.com" autocomplete="off">
+        <p class="field-hint">For Gmail: use your Gmail address. For Outlook: your full address.</p>
+      </div>
+
+      <div class="field">
+        <div class="field-label">SMTP Password / App Password</div>
+        <input type="password" id="smtp_password" placeholder="Your SMTP password or App Password" autocomplete="new-password">
+        <p class="field-hint">For Gmail: create an App Password at myaccount.google.com → Security → App Passwords</p>
+      </div>
+
+      <div class="test-row">
+        <button class="btn-test" id="btn-te" onclick="testEmail()">🔍 Test Connection</button>
+        <span class="test-msg" id="email-msg"></span>
+      </div>
+
+      <div class="field" style="margin-top:4px">
+        <div class="field-label">Webhook Secret <span class="badge badge-opt">Optional</span></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="webhook_secret" placeholder="Leave blank to skip" autocomplete="off" spellcheck="false" style="flex:1">
+          <button type="button" class="btn-test" onclick="genSecret()" style="flex-shrink:0">Generate</button>
+        </div>
+        <p class="field-hint">Protects the Overseerr webhook endpoint. Generate one and paste it into Overseerr's webhook Authorization header.</p>
+      </div>
+
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(3,true)">&larr; Back</button>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn-skip" onclick="skipEmail()">Skip for now</button>
+          <button class="btn-next" onclick="goTo(5,false)">Next &rarr;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5 – Finish -->
+    <div class="panel" id="panel-5">
       <h2 class="panel-title">✅ Almost Done!</h2>
       <p class="panel-sub">Review your settings, then hit <strong>Save &amp; Launch</strong>.</p>
 
@@ -391,7 +460,7 @@
       </div>
 
       <div class="nav">
-        <button class="btn-back" onclick="goTo(3,true)">&larr; Back</button>
+        <button class="btn-back" onclick="goTo(4,true)">&larr; Back</button>
         <button class="btn-next" id="btn-save" onclick="saveSetup()">🚀 Save &amp; Launch</button>
       </div>
     </div>
@@ -463,6 +532,38 @@
     goTo(4, false);
   }
 
+  // ── Step 4 next / skip ───────────────────────────────────────────
+  function skipEmail() {
+    ['smtp_host','smtp_port','smtp_username','smtp_password','smtp_from_name','webhook_secret'].forEach(
+      f => { document.getElementById(f).value = ''; }
+    );
+    document.getElementById('email-msg').innerHTML = '';
+    goTo(5, false);
+  }
+
+  async function testEmail() {
+    const host = val('smtp_host'), user = val('smtp_username'), pass = id('smtp_password').value.trim();
+    if (!host || !user || !pass) { setMsg('email-msg','fail','✗ Host, username and password are required'); return; }
+    const btn = id('btn-te');
+    btn.disabled = true;
+    setMsg('email-msg','busy','<span class="spinner"></span> Testing…');
+    try {
+      const d = await postJSON('/api/setup/test-email', {
+        smtp_host: host, smtp_port: parseInt(val('smtp_port') || 587),
+        smtp_username: user, smtp_password: pass,
+      });
+      setMsg('email-msg', d.success ? 'ok' : 'fail', (d.success ? '✓ ' : '✗ ') + d.message);
+    } catch { setMsg('email-msg','fail','✗ Network error'); }
+    btn.disabled = false;
+  }
+
+  async function genSecret() {
+    try {
+      const d = await postJSON('/api/setup/generate-webhook-secret', {});
+      id('webhook_secret').value = d.secret || '';
+    } catch { id('webhook_secret').value = Math.random().toString(36).slice(2,18); }
+  }
+
   async function testPlex() {
     if (!val('plex_url') || !val('plex_token')) {
       setMsg('plex-msg', 'fail', '✗ Enter URL and token first'); return;
@@ -494,11 +595,13 @@
   }
 
   function buildSummary() {
-    const ovUrl = val('ov_url');
+    const ovUrl   = val('ov_url');
+    const smtpHost = val('smtp_host');
     const rows = [
       ['🖥️ Plex Server', val('plex_url') || '—'],
       ['🔑 Plex Token',  '••••' + (id('plex_token').value.slice(-4) || '••••')],
       ['🎯 Overseerr',  ovUrl || null],
+      ['📧 SMTP',        smtpHost || null],
     ];
     id('summary').innerHTML = rows.map(([k, v]) => {
       const valHtml = v
@@ -518,12 +621,18 @@
     btn.innerHTML = '<span class="spinner"></span> Saving…';
 
     const payload = {
-      plex_server_url:   val('plex_url'),
-      plex_token:        id('plex_token').value.trim(),
-      overseerr_url:     val('ov_url'),
-      overseerr_api_key: id('ov_key').value.trim(),
-      site_name:         val('site_name'),
-      timestamp:         new Date().toISOString(),
+      plex_server_url:            val('plex_url'),
+      plex_token:                 id('plex_token').value.trim(),
+      overseerr_url:              val('ov_url'),
+      overseerr_api_key:          id('ov_key').value.trim(),
+      smtp_host:                  val('smtp_host'),
+      smtp_port:                  val('smtp_port') || '587',
+      smtp_username:              val('smtp_username'),
+      smtp_password:              id('smtp_password').value.trim(),
+      smtp_from_name:             val('smtp_from_name'),
+      newsletter_webhook_secret:  val('webhook_secret'),
+      site_name:                  val('site_name'),
+      timestamp:                  new Date().toISOString(),
     };
 
     try {
@@ -543,12 +652,12 @@
   }
 
   function showSuccess() {
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) {
       id('tab-' + i).classList.remove('active');
       id('tab-' + i).classList.add('done');
       id('bub-' + i).textContent = '✓';
     }
-    id('panel-4').classList.remove('active');
+    id('panel-5').classList.remove('active');
     id('panel-ok').classList.add('active');
 
     let pct = 0;

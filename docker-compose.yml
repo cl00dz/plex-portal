@@ -17,6 +17,16 @@ services:
       - PLEX_TOKEN=${PLEX_TOKEN:-}
       - OVERSEERR_URL=${OVERSEERR_URL:-}
       - OVERSEERR_API_KEY=${OVERSEERR_API_KEY:-}
+      # Email / Newsletter (optional — also configurable via setup wizard step 4)
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM_NAME=${SMTP_FROM_NAME:-Plex Portal}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-}
+      - NEWSLETTER_WEBHOOK_SECRET=${NEWSLETTER_WEBHOOK_SECRET:-}
+      # Optional: set this to your portal's public URL so emails contain correct links
+      - PORTAL_URL=${PORTAL_URL:-}
       # Database (leave DB_HOST empty to use the built-in SQLite)
       - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-3306}

@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Newsletter Setup Guide – {{ site_name }}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f4f4f4; color: #333; }
+
+    .topbar {
+      background: #1e2022; padding: 14px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .topbar-brand .icon { font-size: 22px; }
+    .topbar-brand .name { color: #e5a00d; font-weight: 700; font-size: 16px; }
+    .topbar-links a { color: #ccc; font-size: 13px; text-decoration: none; }
+    .topbar-links a:hover { color: #e5a00d; }
+
+    .page { max-width: 860px; margin: 28px auto; padding: 0 20px 80px; }
+    h1 { font-size: 26px; margin-bottom: 6px; }
+    .page-sub { color: #777; font-size: 14px; margin-bottom: 32px; }
+
+    /* Tab nav */
+    .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 28px; border-bottom: 2px solid #e5a00d; }
+    .tab {
+      padding: 10px 18px; background: transparent; border: none;
+      font-size: 13.5px; font-weight: 600; color: #888;
+      cursor: pointer; border-radius: 6px 6px 0 0;
+      transition: background .15s, color .15s;
+    }
+    .tab:hover  { background: #fff; color: #555; }
+    .tab.active { background: #fff; color: #e5a00d; }
+
+    /* Tab panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn .2s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+    /* Card */
+    .card { background: #fff; border-radius: 10px; padding: 28px 32px; box-shadow: 0 2px 8px rgba(0,0,0,.07); margin-bottom: 20px; }
+    .card-title { font-size: 18px; font-weight: 700; color: #1a1c1e; margin-bottom: 14px; }
+
+    /* Steps */
+    .steps { counter-reset: step; }
+    .step {
+      display: flex; gap: 18px; margin-bottom: 26px;
+      counter-increment: step;
+    }
+    .step-num {
+      flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+      background: #e5a00d; color: #fff; font-weight: 700; font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step-body h4 { font-size: 15px; font-weight: 700; color: #1a1c1e; margin-bottom: 6px; }
+    .step-body p  { font-size: 13.5px; color: #555; line-height: 1.65; margin-bottom: 10px; }
+    .step-body ul { padding-left: 18px; }
+    .step-body li { font-size: 13.5px; color: #555; line-height: 1.7; }
+
+    /* Code / URL blocks */
+    .code-block {
+      background: #1e2022; color: #e5e5e5;
+      border-radius: 8px; padding: 14px 18px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px; margin: 10px 0;
+      word-break: break-all; line-height: 1.6;
+      position: relative;
+    }
+    .code-block .key  { color: #e5a00d; }
+    .code-block .val  { color: #88d8b0; }
+    .copy-row { display: flex; align-items: center; gap: 8px; }
+    .copy-row .copy-btn { background: #3a3d42; color: #ccc; border: none; border-radius: 5px; padding: 3px 10px; font-size: 11px; cursor: pointer; flex-shrink: 0; }
+    .copy-row .copy-btn:hover { background: #e5a00d; color: #fff; }
+
+    /* Info boxes */
+    .tip  { background: #fff8e6; border-left: 4px solid #e5a00d; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 10px 0; font-size: 13px; color: #7a5800; }
+    .info { background: #e8f4fd; border-left: 4px solid #2196f3; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 10px 0; font-size: 13px; color: #0d47a1; }
+    .warn { background: #fce8e8; border-left: 4px solid #dc3545; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 10px 0; font-size: 13px; color: #721c24; }
+    .ok   { background: #e8f5e9; border-left: 4px solid #28a745; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 10px 0; font-size: 13px; color: #155724; }
+
+    /* Provider cards */
+    .providers { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; margin: 14px 0 20px; }
+    .provider {
+      border: 2px solid #eee; border-radius: 9px; padding: 14px 16px;
+      cursor: pointer; transition: border-color .15s;
+    }
+    .provider:hover, .provider.selected { border-color: #e5a00d; }
+    .provider-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .provider-detail { font-size: 12px; color: #888; }
+
+    /* Status indicator */
+    .status-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13.5px; }
+    .status-row:last-child { border-bottom: none; }
+    .dot-ok  { width: 8px; height: 8px; border-radius: 50%; background: #28a745; flex-shrink: 0; }
+    .dot-err { width: 8px; height: 8px; border-radius: 50%; background: #dc3545; flex-shrink: 0; }
+
+    /* Screenshot placeholders (ASCII diagrams) */
+    .diagram {
+      background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 16px 20px; font-family: monospace; font-size: 12px;
+      color: #555; line-height: 1.8; margin: 12px 0; white-space: pre;
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <span class="icon">🎬</span>
+    <span class="name">{{ site_name }}</span>
+    <span style="color:#555;font-size:13px"> / Newsletter Setup Guide</span>
+  </div>
+  <div class="topbar-links">
+    <a href="/newsletter/admin">← Admin Panel</a>
+  </div>
+</div>
+
+<div class="page">
+  <h1>📖 Newsletter Setup Guide</h1>
+  <p class="page-sub">Everything you need to get email notifications and weekly digests running in minutes.</p>
+
+  <!-- Current status -->
+  <div class="card" style="margin-bottom:28px">
+    <div class="card-title">Your Current Status</div>
+    <div class="status-row">
+      <div class="{{ 'dot-ok' if smtp_configured else 'dot-err' }}"></div>
+      <span><strong>SMTP / Email sending</strong> — {{ 'Configured and ready' if smtp_configured else 'Not configured yet (complete Step 1)' }}</span>
+    </div>
+    <div class="status-row">
+      <div class="dot-ok"></div>
+      <span><strong>Overseerr webhook endpoint</strong> — ready at <code style="background:#f2f2f2;padding:1px 6px;border-radius:3px;font-size:12px">{{ webhook_url }}</code></span>
+    </div>
+    <div class="status-row">
+      <div class="dot-ok"></div>
+      <span><strong>Subscriber sign-up page</strong> — available at <a href="{{ subscribe_url }}" style="color:#e5a00d" target="_blank">{{ subscribe_url }}</a></span>
+    </div>
+    <div class="status-row">
+      <div class="dot-ok"></div>
+      <span><strong>Weekly digest</strong> — scheduled every Friday at 9:00 AM server time</span>
+    </div>
+  </div>
+
+  <!-- Tab nav -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('smtp')">1. Email (SMTP)</button>
+    <button class="tab" onclick="showTab('overseerr')">2. Overseerr Webhooks</button>
+    <button class="tab" onclick="showTab('plex-newsletter')">3. Plex's Newsletter</button>
+    <button class="tab" onclick="showTab('users')">4. Inviting Users</button>
+    <button class="tab" onclick="showTab('digest')">5. Weekly Digest</button>
+    <button class="tab" onclick="showTab('troubleshoot')">Troubleshooting</button>
+  </div>
+
+  <!-- ── STEP 1: SMTP ──────────────────────────────────────────────── -->
+  <div class="tab-panel active" id="tab-smtp">
+
+    <div class="card">
+      <div class="card-title">Step 1 — Configure Email Sending (SMTP)</div>
+      <p style="color:#555;font-size:13.5px;margin-bottom:20px;line-height:1.6">
+        To send emails, the portal needs access to an SMTP server. The easiest option for most
+        home labs is Gmail with an App Password — no extra servers needed.
+      </p>
+
+      <div class="tip">💡 If you haven't done this yet, open the <a href="/api/setup/setup" style="color:#e5a00d;font-weight:600">Setup Wizard</a> and complete Step 4 (Email). You can also update environment variables manually.</div>
+
+      <h3 style="margin:22px 0 14px;font-size:15px;color:#333">Choose your email provider:</h3>
+      <div class="providers">
+        <div class="provider selected" onclick="select(this,'gmail')">
+          <div class="provider-name">Gmail</div>
+          <div class="provider-detail">smtp.gmail.com · Port 587</div>
+        </div>
+        <div class="provider" onclick="select(this,'outlook')">
+          <div class="provider-name">Outlook / Hotmail</div>
+          <div class="provider-detail">smtp.office365.com · Port 587</div>
+        </div>
+        <div class="provider" onclick="select(this,'custom')">
+          <div class="provider-name">Custom / Self-hosted</div>
+          <div class="provider-detail">Your own SMTP server</div>
+        </div>
+      </div>
+
+      <!-- Gmail instructions -->
+      <div id="prov-gmail">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Create a Gmail App Password</h4>
+              <p>Google requires an App Password for third-party email clients — it's a 16-character password separate from your normal Google password.</p>
+              <ul>
+                <li>Go to <strong>myaccount.google.com → Security</strong></li>
+                <li>Make sure <strong>2-Step Verification</strong> is enabled (required)</li>
+                <li>Go to <strong>App Passwords</strong> (search for it in the Security page)</li>
+                <li>Select app: <em>Mail</em>, device: <em>Other</em>, name it <em>Plex Portal</em></li>
+                <li>Copy the 16-character password shown (you won't see it again)</li>
+              </ul>
+              <div class="tip">💡 The App Password looks like: <code>abcd efgh ijkl mnop</code> — paste it without spaces.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Enter these settings in the Setup Wizard</h4>
+              <div class="code-block">
+<span class="key">SMTP_HOST</span>     = <span class="val">smtp.gmail.com</span>
+<span class="key">SMTP_PORT</span>     = <span class="val">587</span>
+<span class="key">SMTP_USERNAME</span> = <span class="val">yourname@gmail.com</span>
+<span class="key">SMTP_PASSWORD</span> = <span class="val">abcdefghijklmnop</span>  ← App Password
+<span class="key">SMTP_FROM_NAME</span>  = <span class="val">{{ site_name }}</span>
+<span class="key">SMTP_FROM_EMAIL</span> = <span class="val">yourname@gmail.com</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Test the connection</h4>
+              <p>After saving, go to the <a href="/newsletter/admin" style="color:#e5a00d">Admin Panel</a> and click <strong>Send Test</strong> — enter your own email and make sure you receive it.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Outlook instructions -->
+      <div id="prov-outlook" style="display:none">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Enable SMTP AUTH in Outlook</h4>
+              <p>Microsoft disabled SMTP AUTH on some tenants. Make sure it's enabled:</p>
+              <ul>
+                <li>Go to <strong>admin.microsoft.com → Users → Active Users</strong></li>
+                <li>Click the account → <strong>Mail</strong> tab → <strong>Manage email apps</strong></li>
+                <li>Check <strong>Authenticated SMTP</strong> and save</li>
+              </ul>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Settings</h4>
+              <div class="code-block">
+<span class="key">SMTP_HOST</span>     = <span class="val">smtp.office365.com</span>
+<span class="key">SMTP_PORT</span>     = <span class="val">587</span>
+<span class="key">SMTP_USERNAME</span> = <span class="val">yourname@outlook.com</span>
+<span class="key">SMTP_PASSWORD</span> = <span class="val">your-password</span>
+              </div>
+              <div class="tip">For personal Outlook accounts (hotmail.com, live.com, outlook.com), the same settings apply. You may need to enable <em>Less Secure App Access</em> or create an App Password under <strong>Security → Advanced security options</strong>.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom SMTP instructions -->
+      <div id="prov-custom" style="display:none">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Gather your SMTP credentials</h4>
+              <p>You'll need the following from your email provider or self-hosted mail server:</p>
+              <ul>
+                <li><strong>Hostname</strong> — e.g. <code>mail.yourdomain.com</code></li>
+                <li><strong>Port</strong> — typically 587 (STARTTLS) or 465 (SSL)</li>
+                <li><strong>Username</strong> — usually your full email address</li>
+                <li><strong>Password</strong> — your email password or app password</li>
+              </ul>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Set environment variables</h4>
+              <div class="code-block">
+<span class="key">SMTP_HOST</span>     = <span class="val">mail.yourdomain.com</span>
+<span class="key">SMTP_PORT</span>     = <span class="val">587</span>
+<span class="key">SMTP_USERNAME</span> = <span class="val">notifications@yourdomain.com</span>
+<span class="key">SMTP_PASSWORD</span> = <span class="val">your-password</span>
+<span class="key">SMTP_FROM_NAME</span>  = <span class="val">{{ site_name }}</span>
+<span class="key">SMTP_FROM_EMAIL</span> = <span class="val">notifications@yourdomain.com</span>
+              </div>
+              <div class="info">📌 If you're using port 465 (SSL/TLS instead of STARTTLS), set <code>SMTP_TLS=false</code> — the code will then attempt a direct SSL connection.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 2: Overseerr Webhooks ──────────────────────────────── -->
+  <div class="tab-panel" id="tab-overseerr">
+    <div class="card">
+      <div class="card-title">Step 2 — Connect Overseerr for Request Notifications</div>
+      <p style="color:#555;font-size:13.5px;margin-bottom:20px;line-height:1.6">
+        When a user's Plex request becomes available, Overseerr can fire a webhook to the portal,
+        which then emails the person who made the request. This only takes 2 minutes to set up.
+      </p>
+
+      <div class="tip">✅ Make sure SMTP is configured first (Step 1) before setting up webhooks.</div>
+
+      <div class="steps" style="margin-top:18px">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Open Overseerr Settings</h4>
+            <p>In Overseerr, go to <strong>Settings → Notifications → Webhook</strong>.</p>
+            <div class="diagram">Overseerr
+└── Settings
+    └── Notifications
+        └── Webhook  ← click here</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Enable the Webhook agent</h4>
+            <p>Toggle <strong>Enable Agent</strong> to on.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Enter the Webhook URL</h4>
+            <p>Paste the following URL into the <strong>Webhook URL</strong> field:</p>
+            <div class="code-block copy-row">
+              <span id="wh-url2">{{ webhook_url }}</span>
+              <button class="copy-btn" onclick="copyId('wh-url2', this)">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        {% if webhook_secret %}
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Add the Authorization Header (security)</h4>
+            <p>Add a custom header to verify the webhook came from Overseerr:</p>
+            <div class="code-block">
+<span class="key">Header name:</span>  Authorization
+<span class="key">Header value:</span> Bearer <span class="val">{{ webhook_secret }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h4>Select notification types</h4>
+            <p>Under <strong>Notification Types</strong>, enable:</p>
+            <ul>
+              <li>✅ <strong>Media Available</strong> — fires when a requested item is ready</li>
+            </ul>
+            <p>You can also enable other types, but only <em>Media Available</em> triggers emails to requestors.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <h4>Save and test</h4>
+            <p>Click <strong>Save</strong>, then click <strong>Test Notifications</strong> in Overseerr. The portal will receive the test but won't send an email (test events use a fake email). A successful response means the connection is working.</p>
+            <div class="ok">✅ If Overseerr shows "Test notification sent", you're all set!</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Select notification types</h4>
+            <p>Enable <strong>Media Available</strong> in the Notification Types section. Save and test.</p>
+            <div class="tip">💡 For security, generate a <code>NEWSLETTER_WEBHOOK_SECRET</code> via the Setup Wizard's email step and add it as an Authorization header in Overseerr.</div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="step">
+          <div class="step-num" style="background:#555">?</div>
+          <div class="step-body">
+            <h4>How the matching works</h4>
+            <p>When Overseerr fires a <em>Media Available</em> webhook, the portal looks for a subscriber whose:</p>
+            <ul>
+              <li><strong>Email matches</strong> the Overseerr account email that made the request, OR</li>
+              <li><strong>Plex username matches</strong> the Overseerr username that made the request</li>
+            </ul>
+            <p>This is why subscribers should fill in their Plex username during sign-up — it ensures the match works even if email addresses differ between Overseerr and the portal subscription.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 3: Plex's built-in newsletter ───────────────────────── -->
+  <div class="tab-panel" id="tab-plex-newsletter">
+    <div class="card">
+      <div class="card-title">Step 3 — Plex's Built-in Newsletter (Optional)</div>
+      <p style="color:#555;font-size:13.5px;margin-bottom:16px;line-height:1.6">
+        Plex Media Server has its own built-in newsletter feature that automatically emails your
+        Plex home users about recently added content. This is separate from the portal's newsletter
+        system — you can run both together or choose one.
+      </p>
+
+      <div class="info">📌 Plex's built-in newsletter requires <strong>Plex Pass</strong> for the server owner and sends to users who have Plex accounts. The portal's newsletter works with just an email address and no Plex account required.</div>
+
+      <div class="steps" style="margin-top:18px">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Open Plex Web Settings</h4>
+            <p>In Plex Web, click the wrench icon (⚙️) in the top-right to open server settings. Make sure you're viewing <em>your server's</em> settings (not the Plex.tv account settings).</p>
+            <div class="diagram">Plex Web App
+└── ⚙️ (Settings — top right)
+    └── Your Server Name
+        └── Extras  ← scroll down in left sidebar</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Enable Newsletter in Extras</h4>
+            <p>In the <strong>Extras</strong> section, look for <strong>Newsletter</strong>. Toggle it on.</p>
+            <p>You can configure:</p>
+            <ul>
+              <li><strong>Frequency</strong> — Weekly or Monthly</li>
+              <li><strong>Day and time</strong> — when to send it</li>
+              <li><strong>Libraries to include</strong> — which Plex libraries appear in the digest</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Who receives it</h4>
+            <p>Plex's newsletter is automatically sent to all users you've shared your Plex library with (Plex home users). They receive it at their Plex account email address — no extra sign-up needed.</p>
+            <div class="tip">💡 <strong>Both systems together:</strong> Use Plex's newsletter for your Plex-account users, and the portal's newsletter for people who use the portal but don't have Plex accounts (e.g., family members who just use the portal to request content).</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Send a test newsletter</h4>
+            <p>In the same <strong>Extras → Newsletter</strong> section, there's a <strong>Send a Newsletter Now</strong> button. Click it to preview what users will receive before the scheduled send.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:4px">
+        <h3 style="font-size:15px;color:#333;margin-bottom:12px">Portal Newsletter vs Plex Newsletter</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#f8f8f8">
+              <th style="padding:10px 14px;text-align:left;border-bottom:2px solid #eee">Feature</th>
+              <th style="padding:10px 14px;text-align:center;border-bottom:2px solid #eee">Portal Newsletter</th>
+              <th style="padding:10px 14px;text-align:center;border-bottom:2px solid #eee">Plex Newsletter</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in [
+              ('Requires Plex account', '✗ No', '✓ Yes'),
+              ('Requires Plex Pass', '✗ No', '✓ Yes'),
+              ('Request-complete notifications', '✓ Yes', '✗ No'),
+              ('Weekly content digest', '✓ Yes', '✓ Yes'),
+              ('Custom branding', '✓ Yes (site name)', '✗ Limited'),
+              ('User can manage preferences', '✓ Yes', '✗ No'),
+            ] %}
+            <tr>
+              <td style="padding:9px 14px;border-bottom:1px solid #f5f5f5">{{ row[0] }}</td>
+              <td style="padding:9px 14px;border-bottom:1px solid #f5f5f5;text-align:center;color:{{ '#1a8a37' if row[1].startswith('✓') else '#888' }}">{{ row[1] }}</td>
+              <td style="padding:9px 14px;border-bottom:1px solid #f5f5f5;text-align:center;color:{{ '#1a8a37' if row[2].startswith('✓') else '#888' }}">{{ row[2] }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 4: Inviting Users ────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-users">
+    <div class="card">
+      <div class="card-title">Step 4 — Invite Users to Subscribe</div>
+      <p style="color:#555;font-size:13.5px;margin-bottom:20px;line-height:1.6">
+        The subscribe page is public — anyone with the link can sign up.
+        Share it with the people you've invited to your Plex server.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Copy the subscribe link</h4>
+            <div class="code-block copy-row">
+              <span id="sub-url2">{{ subscribe_url }}</span>
+              <button class="copy-btn" onclick="copyId('sub-url2', this)">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Share it with your Plex users</h4>
+            <p>Send the link via:</p>
+            <ul>
+              <li>Direct message (iMessage, WhatsApp, Signal, etc.)</li>
+              <li>Include it in your Plex share invitation message</li>
+              <li>Add a link to it from your portal's home page</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>What users will see</h4>
+            <p>The subscribe form asks for:</p>
+            <ul>
+              <li><strong>Name</strong> (optional) — used to personalise emails</li>
+              <li><strong>Email address</strong> — required</li>
+              <li><strong>Plex username</strong> (optional but recommended) — used to match Overseerr requests to subscribers</li>
+              <li><strong>Preferences</strong> — request notifications and/or weekly digest</li>
+            </ul>
+            <p>After submitting, they receive a confirmation email. Once confirmed, they're active.</p>
+            <div class="tip">💡 Tell users to enter their <strong>Plex username</strong> when signing up — without it, request notifications won't work unless their Overseerr email matches their subscriber email.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Manage subscribers</h4>
+            <p>View and remove subscribers from the <a href="/newsletter/admin" style="color:#e5a00d">Admin Panel</a>. You can also see who's confirmed and when they were last emailed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 5: Weekly Digest ─────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-digest">
+    <div class="card">
+      <div class="card-title">Step 5 — Understanding the Weekly Digest</div>
+      <p style="color:#555;font-size:13.5px;margin-bottom:20px;line-height:1.6">
+        The portal sends a weekly email digest every <strong>Friday at 9:00 AM</strong> server time.
+        Here's exactly what it includes and how it works.
+      </p>
+
+      <h3 style="font-size:15px;color:#333;margin:0 0 16px">What's in the digest</h3>
+
+      <div style="margin-bottom:24px">
+        <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:#f8f8f8;border-radius:9px;margin-bottom:10px">
+          <span style="font-size:24px;flex-shrink:0">🆕</span>
+          <div>
+            <strong style="display:block;margin-bottom:4px">New This Week — per library</strong>
+            <span style="font-size:13px;color:#666">The 6 most-recently added items from each Plex library section (Movies, TV Shows, etc.). Each item shows its title, year, and a short synopsis. Poster thumbnails are loaded directly from your Plex server.</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:#f8f8f8;border-radius:9px">
+          <span style="font-size:24px;flex-shrink:0">✅</span>
+          <div>
+            <strong style="display:block;margin-bottom:4px">Recently Fulfilled Requests</strong>
+            <span style="font-size:13px;color:#666">Up to 10 recently-available items from Overseerr (if configured). Shows what was added as a result of user requests.</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:15px;color:#333;margin:20px 0 12px">Library access per user</h3>
+      <p style="font-size:13.5px;color:#555;line-height:1.6;margin-bottom:14px">
+        Currently the digest shows content from <strong>all</strong> Plex library sections the server has.
+        Content is organised by library so it's easy to see what's new in Movies vs TV Shows vs other libraries.
+      </p>
+      <div class="info">📌 Future enhancement: Library-specific filtering per subscriber (so a subscriber who only uses the TV section won't see movie updates). This can be added by extending the subscription form with library preference checkboxes.</div>
+
+      <h3 style="font-size:15px;color:#333;margin:20px 0 12px">Sending manually</h3>
+      <p style="font-size:13.5px;color:#555;line-height:1.6">
+        You don't have to wait until Friday. From the <a href="/newsletter/admin" style="color:#e5a00d">Admin Panel</a>, click <strong>Send Weekly Digest Now</strong> to trigger it immediately. Useful for testing or for special announcements.
+      </p>
+
+      <h3 style="font-size:15px;color:#333;margin:20px 0 12px">Scheduler details</h3>
+      <div class="code-block">
+Schedule:  Every <span class="val">Friday at 09:00 AM</span> (server/container timezone)
+Engine:    APScheduler BackgroundScheduler
+Behaviour: Runs automatically — no cron job needed
+Manual:    POST /newsletter/send-weekly  (from Admin Panel)
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Troubleshooting ────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-troubleshoot">
+    <div class="card">
+      <div class="card-title">Troubleshooting</div>
+
+      <div style="margin-bottom:20px">
+        <h4 style="color:#1a1c1e;margin-bottom:8px">❌ Test email is not arriving</h4>
+        <ul style="font-size:13.5px;color:#555;line-height:1.8;padding-left:18px">
+          <li>Check the <strong>spam/junk folder</strong> — first emails often end up there</li>
+          <li>Verify your SMTP credentials are correct (re-test via Setup Wizard → email step)</li>
+          <li>For Gmail: make sure you're using an <strong>App Password</strong>, not your regular password</li>
+          <li>Check the container logs: <code style="background:#f2f2f2;padding:1px 6px;border-radius:3px">docker logs plex-portal</code></li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <h4 style="color:#1a1c1e;margin-bottom:8px">❌ Overseerr webhook not receiving</h4>
+        <ul style="font-size:13.5px;color:#555;line-height:1.8;padding-left:18px">
+          <li>Make sure the portal is accessible from where Overseerr is running (same Docker network, or correct IP/port)</li>
+          <li>Confirm the Webhook URL in Overseerr matches exactly: <code style="background:#f2f2f2;padding:1px 6px;border-radius:3px">{{ webhook_url }}</code></li>
+          <li>If you have a webhook secret set, make sure the Authorization header in Overseerr is: <code style="background:#f2f2f2;padding:1px 6px;border-radius:3px">Bearer &lt;your-secret&gt;</code></li>
+          <li>Check Overseerr's notification logs for errors</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <h4 style="color:#1a1c1e;margin-bottom:8px">❌ User made a request but got no email</h4>
+        <ul style="font-size:13.5px;color:#555;line-height:1.8;padding-left:18px">
+          <li>The user must be subscribed AND confirmed</li>
+          <li>The email or Plex username in the subscription must match what's in Overseerr</li>
+          <li>The subscription must have <strong>Request notifications</strong> enabled</li>
+          <li>SMTP must be configured</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <h4 style="color:#1a1c1e;margin-bottom:8px">❌ Weekly digest has no content</h4>
+        <ul style="font-size:13.5px;color:#555;line-height:1.8;padding-left:18px">
+          <li>Plex server URL and token must be set (in Setup Wizard or environment)</li>
+          <li>Check that Plex libraries exist and have content added in the last week</li>
+          <li>Check container logs for <code>Plex content fetch failed</code> errors</li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 style="color:#1a1c1e;margin-bottom:8px">🔧 Useful commands</h4>
+        <div class="code-block">
+# View live logs
+docker logs -f plex-portal
+
+# View last 100 lines
+docker logs --tail 100 plex-portal
+
+# Restart the portal (keeps data)
+docker restart plex-portal
+
+# Reset setup wizard (won't delete subscribers)
+docker exec plex-portal rm /app/src/data/setup_complete.json
+docker restart plex-portal
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  function select(el, prov) {
+    document.querySelectorAll('.provider').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    ['gmail','outlook','custom'].forEach(p => {
+      const d = document.getElementById('prov-' + p);
+      if (d) d.style.display = p === prov ? 'block' : 'none';
+    });
+  }
+
+  function copyId(id, btn) {
+    const text = document.getElementById(id).textContent.trim();
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = '✓ Copied';
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,5 +1,8 @@
 import os
 import json
+import smtplib
+import ssl
+import secrets
 import requests
 from flask import Blueprint, jsonify, request, render_template
 from src.extensions import limiter
@@ -119,10 +122,18 @@ def save_setup():
 
         # Update live environment so the running process picks up changes immediately
         env_map = {
-            'plex_server_url': 'PLEX_SERVER_URL',
-            'plex_token': 'PLEX_TOKEN',
-            'overseerr_url': 'OVERSEERR_URL',
-            'overseerr_api_key': 'OVERSEERR_API_KEY',
+            'plex_server_url':          'PLEX_SERVER_URL',
+            'plex_token':               'PLEX_TOKEN',
+            'overseerr_url':            'OVERSEERR_URL',
+            'overseerr_api_key':        'OVERSEERR_API_KEY',
+            'site_name':                'SITE_NAME',
+            'smtp_host':                'SMTP_HOST',
+            'smtp_port':                'SMTP_PORT',
+            'smtp_username':            'SMTP_USERNAME',
+            'smtp_password':            'SMTP_PASSWORD',
+            'smtp_from_name':           'SMTP_FROM_NAME',
+            'smtp_from_email':          'SMTP_FROM_EMAIL',
+            'newsletter_webhook_secret': 'NEWSLETTER_WEBHOOK_SECRET',
         }
         for field, env_key in env_map.items():
             val = data.get(field, '').strip()
@@ -133,6 +144,49 @@ def save_setup():
 
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error saving setup: {str(e)}'}), 500
+
+
+# ---------------------------------------------------------------------------
+# Test SMTP connection (called from setup wizard email step)
+# ---------------------------------------------------------------------------
+
+@setup_bp.route('/test-email', methods=['POST'])
+@limiter.limit("5 per minute")
+def test_email():
+    """Verify SMTP credentials by opening a TLS connection."""
+    data     = request.json or {}
+    host     = data.get('smtp_host', '').strip()
+    port     = int(data.get('smtp_port', 587) or 587)
+    username = data.get('smtp_username', '').strip()
+    password = data.get('smtp_password', '').strip()
+
+    if not host or not username or not password:
+        return jsonify({'success': False,
+                        'message': 'Host, username, and password are all required'})
+    try:
+        ctx = ssl.create_default_context()
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=ctx)
+            server.login(username, password)
+        return jsonify({'success': True, 'message': f'Connected to {host}:{port} — credentials accepted!'})
+    except smtplib.SMTPAuthenticationError:
+        return jsonify({'success': False,
+                        'message': 'Authentication failed — check username and password'})
+    except (smtplib.SMTPConnectError, ConnectionRefusedError, OSError) as e:
+        return jsonify({'success': False,
+                        'message': f"Cannot connect to {host}:{port} — {e}"})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Test failed: {str(e)}'})
+
+
+# ---------------------------------------------------------------------------
+# Generate a webhook secret (called from setup wizard)
+# ---------------------------------------------------------------------------
+
+@setup_bp.route('/generate-webhook-secret', methods=['POST'])
+def generate_webhook_secret():
+    return jsonify({'secret': secrets.token_urlsafe(24)})
 
 
 # ---------------------------------------------------------------------------
