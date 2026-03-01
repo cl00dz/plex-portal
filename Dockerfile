@@ -10,13 +10,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PORT=5000 \
     DEBUG=False
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    default-libmysqlclient-dev \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy requirements file
 COPY requirements.txt .
 

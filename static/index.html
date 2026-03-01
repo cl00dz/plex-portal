@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plex Portal - Your Gateway to Plex</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="main-header">
+            <div class="logo-container">
+                <img src="/static/images/plex-logo.png" alt="Plex Logo" class="logo" onerror="this.src='/static/images/plex-logo-placeholder.png'">
+                <h1>Plex Portal</h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#server-status">Server Status</a></li>
+                    <li><a href="#request-content">Request Content</a></li>
+                    <li><a href="/api/guides/device-guides">Device Guides</a></li>
+                    <li><a href="/api/guides/plex-beginners">Plex for Beginners</a></li>
+                </ul>
+            </nav>
+            <div class="auth-container">
+                <button id="login-button" class="btn-primary">Login with Plex</button>
+                <div id="user-profile" class="hidden">
+                    <span id="username">Username</span>
+                    <button id="logout-button" class="btn-secondary">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <section id="hero" class="hero-section">
+                <div class="hero-content">
+                    <h2>Welcome to Your Plex Community</h2>
+                    <p>Your gateway to an amazing media experience. Check server status, request content, and get help with optimal settings.</p>
+                </div>
+            </section>
+
+            <section id="server-status" class="status-section">
+                <h2>Plex Server Status</h2>
+                <div class="status-container">
+                    <div id="status-indicator" class="status-indicator">
+                        <div class="status-circle"></div>
+                        <span id="status-text">Checking status...</span>
+                    </div>
+                    <div id="server-details" class="server-details hidden">
+                        <div class="detail-item">
+                            <span class="detail-label">Server Name:</span>
+                            <span id="server-name" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Version:</span>
+                            <span id="server-version" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Platform:</span>
+                            <span id="server-platform" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Last Updated:</span>
+                            <span id="server-updated" class="detail-value">-</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="request-content" class="request-section">
+                <h2>Request Content</h2>
+                <div class="request-container">
+                    <div class="search-container">
+                        <input type="text" id="search-input" placeholder="Search for movies, TV shows, or music...">
+                        <button id="search-button" class="btn-primary">Search</button>
+                    </div>
+                    <div id="search-results" class="search-results">
+                        <!-- Search results will be populated here -->
+                        <div class="placeholder-message">
+                            <p>Search for content to request it for the Plex server.</p>
+                            <p>You must be logged in with your Plex account to make requests.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="features-section">
+                <h2>Portal Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h3>Device Guides</h3>
+                        <p>Optimize your Plex experience with our detailed device-specific setup guides.</p>
+                        <a href="/api/guides/device-guides" class="btn-secondary">View Guides</a>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Plex for Beginners</h3>
+                        <p>New to Plex? Learn everything you need to know with our beginner-friendly guide.</p>
+                        <a href="/api/guides/plex-beginners" class="btn-secondary">Learn More</a>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+
+        <footer class="main-footer">
+            <div class="footer-content">
+                <p>&copy; 2025 Plex Portal. Not affiliated with Plex, Inc.</p>
+                <p>Plex, the Plex Play logo and Plex Media Server are trademarks of Plex and used under a license.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check server status on page load
+            checkServerStatus();
+            
+            // Set up event listeners
+            document.getElementById('login-button').addEventListener('click', loginWithPlex);
+            document.getElementById('logout-button').addEventListener('click', logout);
+            document.getElementById('search-button').addEventListener('click', searchContent);
+            
+            // Check if user is already logged in
+            checkAuthStatus();
+        });
+        
+        function checkServerStatus() {
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusCircle = statusIndicator.querySelector('.status-circle');
+            const statusText = document.getElementById('status-text');
+            const serverDetails = document.getElementById('server-details');
+            
+            fetch('/api/plex/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'online') {
+                        statusCircle.classList.add('online');
+                        statusText.textContent = 'Server Online';
+                        serverDetails.classList.remove('hidden');
+                        
+                        // If server info is available, populate it
+                        if (data.server_info) {
+                            document.getElementById('server-name').textContent = data.server_info.friendlyName || 'Plex Server';
+                            document.getElementById('server-version').textContent = data.server_info.version || '-';
+                            document.getElementById('server-platform').textContent = data.server_info.platform || '-';
+                            
+                            // Format the updated date if available
+                            if (data.server_info.updatedAt) {
+                                const date = new Date(data.server_info.updatedAt);
+                                document.getElementById('server-updated').textContent = date.toLocaleString();
+                            }
+                        }
+                    } else {
+                        statusCircle.classList.add('offline');
+                        statusText.textContent = data.status === 'error' ? 'Server Error' : 'Server Offline';
+                        serverDetails.classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking server status:', error);
+                    statusCircle.classList.add('error');
+                    statusText.textContent = 'Status Check Failed';
+                    serverDetails.classList.add('hidden');
+                });
+        }
+        
+        function loginWithPlex() {
+            // Redirect to Plex OAuth login
+            window.location.href = '/api/auth/login';
+        }
+        
+        function logout() {
+            fetch('/api/auth/logout')
+                .then(() => {
+                    document.getElementById('login-button').classList.remove('hidden');
+                    document.getElementById('user-profile').classList.add('hidden');
+                    // Reload the page to reset any user-specific content
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error logging out:', error);
+                });
+        }
+        
+        function checkAuthStatus() {
+            fetch('/api/auth/user')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.authenticated) {
+                        document.getElementById('login-button').classList.add('hidden');
+                        document.getElementById('user-profile').classList.remove('hidden');
+                        document.getElementById('username').textContent = data.user.username || 'User';
+                    } else {
+                        document.getElementById('login-button').classList.remove('hidden');
+                        document.getElementById('user-profile').classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking auth status:', error);
+                });
+        }
+        
+        function searchContent() {
+            const searchInput = document.getElementById('search-input');
+            const searchResults = document.getElementById('search-results');
+            const query = searchInput.value.trim();
+            
+            if (!query) {
+                return;
+            }
+            
+            // Clear previous results
+            searchResults.innerHTML = '<div class="loading">Searching...</div>';
+            
+            fetch(`/api/auth/overseerr/search?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    searchResults.innerHTML = '';
+                    
+                    if (data.error) {
+                        searchResults.innerHTML = `<div class="error-message">${data.error}</div>`;
+                        return;
+                    }
+                    
+                    if (!data.results || data.results.length === 0) {
+                        searchResults.innerHTML = '<div class="no-results">No results found. Try a different search term.</div>';
+                        return;
+                    }
+                    
+                    // Display results
+                    data.results.forEach(item => {
+                        const resultCard = document.createElement('div');
+                        resultCard.className = 'result-card';
+                        
+                        const posterUrl = item.posterPath 
+                            ? `https://image.tmdb.org/t/p/w200${item.posterPath}`
+                            : '/static/images/no-poster.png';
+                        
+                        resultCard.innerHTML = `
+                            <div class="result-poster">
+                                <img src="${posterUrl}" alt="${item.title || item.name}" onerror="this.src='/static/images/no-poster.png'">
+                            </div>
+                            <div class="result-details">
+                                <h3>${item.title || item.name}</h3>
+                                <p class="result-year">${item.releaseDate ? new Date(item.releaseDate).getFullYear() : 'Unknown'}</p>
+                                <p class="result-overview">${item.overview || 'No description available.'}</p>
+                                <button class="btn-request" data-id="${item.id}" data-type="${item.mediaType}">Request</button>
+                            </div>
+                        `;
+                        
+                        searchResults.appendChild(resultCard);
+                        
+                        // Add event listener to request button
+                        const requestButton = resultCard.querySelector('.btn-request');
+                        requestButton.addEventListener('click', function() {
+                            requestContent(item.id, item.mediaType);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error searching content:', error);
+                    searchResults.innerHTML = '<div class="error-message">An error occurred while searching. Please try again later.</div>';
+                });
+        }
+        
+        function requestContent(mediaId, mediaType) {
+            fetch('/api/auth/overseerr/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    mediaId: mediaId,
+                    mediaType: mediaType
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(`Request failed: ${data.error}`);
+                } else {
+                    alert('Content requested successfully! The server admin will be notified.');
+                }
+            })
+            .catch(error => {
+                console.error('Error requesting content:', error);
+                alert('An error occurred while submitting your request. Please try again later.');
+            });
+        }
+    </script>
+</body>
+</html>

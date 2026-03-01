@@ -1,8 +1,8 @@
-version: '3'
+version: '3.8'
 
 services:
   plex-portal:
-    image: python:3.11-slim
+    build: .
     container_name: plex-portal
     restart: unless-stopped
     ports:
@@ -24,13 +24,8 @@ services:
     networks:
       - plex-network
     depends_on:
-      - db
-    command: >
-      bash -c "apt-get update && apt-get install -y --no-install-recommends git build-essential default-libmysqlclient-dev &&
-      git clone https://github.com/yourusername/plex-portal.git /app &&
-      cd /app &&
-      pip install --no-cache-dir -r requirements.txt &&
-      python -m src.main"
+      db:
+        condition: service_healthy
 
   db:
     image: mysql:8.0
@@ -45,6 +40,12 @@ services:
       - plex-portal-db:/var/lib/mysql
     networks:
       - plex-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 networks:
   plex-network:

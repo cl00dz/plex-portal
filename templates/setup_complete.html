@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Complete - Plex Portal</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .setup-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .setup-header img {
+            max-width: 150px;
+            margin-bottom: 20px;
+        }
+        
+        .btn-primary {
+            padding: 12px 30px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-header">
+            <img src="https://cdn-icons-png.flaticon.com/512/732/732204.png" alt="Plex Logo" onerror="this.src='/static/images/plex-logo-placeholder.png'">
+            <h1>Setup Already Completed</h1>
+        </div>
+        
+        <div class="setup-content">
+            <p>Your Plex Portal has already been configured and is ready to use.</p>
+            <p>If you need to change your configuration, you can update the environment variables in your Docker container or Portainer stack.</p>
+            <a href="/" class="btn-primary">Go to Plex Portal</a>
+        </div>
+    </div>
+</body>
+</html>

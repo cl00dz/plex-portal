@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Plex Invite - Plex Portal</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Request a Plex Server Invitation</h1>
+        
+        <div class="intro-section">
+            <p>Interested in joining our Plex server? Fill out the form below to request an invitation. Our administrator will review your request and, if approved, send you an official Plex invitation to the email address you provide.</p>
+        </div>
+
+        <div class="form-container">
+            <form id="invite-request-form">
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" required>
+                    <small>This is where we'll send your Plex invitation if approved.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="device">Primary Device for Plex</label>
+                    <select id="device" name="device">
+                        <option value="">Please select...</option>
+                        <option value="Smart TV">Smart TV</option>
+                        <option value="Roku">Roku</option>
+                        <option value="Apple TV">Apple TV</option>
+                        <option value="Amazon Fire TV">Amazon Fire TV</option>
+                        <option value="Android TV / Shield">Android TV / NVIDIA Shield</option>
+                        <option value="PlayStation">PlayStation</option>
+                        <option value="Xbox">Xbox</option>
+                        <option value="Computer">Computer / Laptop</option>
+                        <option value="Mobile">Mobile Phone / Tablet</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="experience">Plex Experience Level</label>
+                    <select id="experience" name="experience">
+                        <option value="">Please select...</option>
+                        <option value="Beginner">Beginner - Never used Plex before</option>
+                        <option value="Intermediate">Intermediate - Used Plex before but not extensively</option>
+                        <option value="Advanced">Advanced - Experienced Plex user</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reason">Why would you like to join our Plex server? *</label>
+                    <textarea id="reason" name="reason" rows="4" required></textarea>
+                    <small>Please share a bit about your interest in joining our Plex community.</small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Submit Request</button>
+                    <button type="reset" class="btn-secondary">Reset Form</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="response-message" class="hidden">
+            <div class="success-message hidden">
+                <h2>Thank You for Your Request!</h2>
+                <p>We've received your Plex server invitation request. A confirmation email has been sent to the address you provided.</p>
+                <p>Our administrator will review your request as soon as possible. If approved, you'll receive an official Plex invitation email with instructions on how to access the server.</p>
+                <p>While you wait, feel free to check out our <a href="/api/guides/plex-beginners">Beginner's Guide to Plex</a> to learn more about how Plex works.</p>
+            </div>
+            
+            <div class="error-message hidden">
+                <h2>Oops! Something went wrong.</h2>
+                <p id="error-details">There was an error processing your request. Please try again later.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('invite-request-form');
+            const responseMessage = document.getElementById('response-message');
+            const successMessage = document.querySelector('.success-message');
+            const errorMessage = document.querySelector('.error-message');
+            const errorDetails = document.getElementById('error-details');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Collect form data
+                const formData = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    device: document.getElementById('device').value,
+                    experience: document.getElementById('experience').value,
+                    reason: document.getElementById('reason').value,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Submit the request
+                fetch('/api/invite/submit-invite-request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Show appropriate message
+                    responseMessage.classList.remove('hidden');
+                    
+                    if (data.success) {
+                        form.reset();
+                        form.classList.add('hidden');
+                        successMessage.classList.remove('hidden');
+                        errorMessage.classList.add('hidden');
+                    } else {
+                        errorMessage.classList.remove('hidden');
+                        successMessage.classList.add('hidden');
+                        errorDetails.textContent = data.message || 'There was an error processing your request. Please try again later.';
+                    }
+                })
+                .catch(error => {
+                    responseMessage.classList.remove('hidden');
+                    errorMessage.classList.remove('hidden');
+                    successMessage.classList.add('hidden');
+                    errorDetails.textContent = 'Network error. Please check your connection and try again.';
+                    console.error('Error:', error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

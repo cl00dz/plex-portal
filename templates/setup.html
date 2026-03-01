@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plex Portal Setup - Initial Configuration</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .setup-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .setup-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .setup-header img {
+            max-width: 150px;
+            margin-bottom: 20px;
+        }
+        
+        .setup-form {
+            margin-top: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .form-section h3 {
+            margin-bottom: 15px;
+            color: #e5a00d;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        
+        .btn-primary {
+            padding: 12px 30px;
+            font-size: 16px;
+        }
+        
+        .setup-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #777;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-header">
+            <img src="https://cdn-icons-png.flaticon.com/512/732/732204.png" alt="Plex Logo" onerror="this.src='/static/images/plex-logo-placeholder.png'">
+            <h1>Welcome to Plex Portal</h1>
+            <p>Complete this initial setup to configure your Plex Portal application.</p>
+        </div>
+        
+        <div id="setup-form" class="setup-form">
+            <div class="form-section">
+                <h3>Plex Server Configuration</h3>
+                <p>Enter your Plex server details to enable server status monitoring and authentication.</p>
+                
+                <div class="form-group">
+                    <label for="plex_server_url">Plex Server URL *</label>
+                    <input type="text" id="plex_server_url" name="plex_server_url" placeholder="http://your-plex-server:32400" required>
+                    <small>The full URL to your Plex server, including port number.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="plex_token">Plex Token *</label>
+                    <input type="text" id="plex_token" name="plex_token" placeholder="Your Plex authentication token" required>
+                    <small>Your Plex authentication token. <a href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/" target="_blank">How to find your token</a></small>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3>Overseerr Integration</h3>
+                <p>Configure Overseerr integration to enable content requests through Plex Portal.</p>
+                
+                <div class="form-group">
+                    <label for="overseerr_url">Overseerr URL *</label>
+                    <input type="text" id="overseerr_url" name="overseerr_url" placeholder="http://your-overseerr-server:5055" required>
+                    <small>The full URL to your Overseerr instance, including port number.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="overseerr_api_key">Overseerr API Key *</label>
+                    <input type="text" id="overseerr_api_key" name="overseerr_api_key" placeholder="Your Overseerr API key" required>
+                    <small>Your Overseerr API key. This can be found in Overseerr under Settings > General.</small>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3>Additional Settings</h3>
+                <p>These settings are optional and can be configured later through environment variables.</p>
+                
+                <div class="form-group">
+                    <label for="site_name">Site Name</label>
+                    <input type="text" id="site_name" name="site_name" placeholder="My Plex Portal">
+                    <small>The name of your Plex Portal instance, displayed in the header.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin_email">Admin Email</label>
+                    <input type="email" id="admin_email" name="admin_email" placeholder="admin@example.com">
+                    <small>The administrator's email address for notifications (optional).</small>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" id="save-setup" class="btn-primary">Save Configuration</button>
+            </div>
+        </div>
+        
+        <div id="setup-success" class="hidden">
+            <div class="success-message">
+                <h2>Setup Completed Successfully!</h2>
+                <p>Your Plex Portal has been configured and is ready to use.</p>
+                <p>The application will now restart to apply your configuration.</p>
+                <p>You will be redirected to the main page in a few seconds...</p>
+            </div>
+        </div>
+        
+        <div id="setup-error" class="hidden">
+            <div class="error-message">
+                <h2>Setup Error</h2>
+                <p id="error-details">There was an error saving your configuration. Please try again.</p>
+                <button type="button" id="retry-setup" class="btn-primary">Try Again</button>
+            </div>
+        </div>
+        
+        <div class="setup-footer">
+            <p>Plex Portal - Version 1.0.0</p>
+            <p>Plex, the Plex Play logo and Plex Media Server are trademarks of Plex and used under a license.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const saveSetupButton = document.getElementById('save-setup');
+            const retrySetupButton = document.getElementById('retry-setup');
+            const setupForm = document.getElementById('setup-form');
+            const setupSuccess = document.getElementById('setup-success');
+            const setupError = document.getElementById('setup-error');
+            const errorDetails = document.getElementById('error-details');
+            
+            saveSetupButton.addEventListener('click', function() {
+                // Validate form
+                const plexServerUrl = document.getElementById('plex_server_url').value.trim();
+                const plexToken = document.getElementById('plex_token').value.trim();
+                const overseerrUrl = document.getElementById('overseerr_url').value.trim();
+                const overseerrApiKey = document.getElementById('overseerr_api_key').value.trim();
+                
+                if (!plexServerUrl || !plexToken || !overseerrUrl || !overseerrApiKey) {
+                    errorDetails.textContent = 'Please fill in all required fields.';
+                    setupForm.classList.add('hidden');
+                    setupError.classList.remove('hidden');
+                    return;
+                }
+                
+                // Collect form data
+                const formData = {
+                    plex_server_url: plexServerUrl,
+                    plex_token: plexToken,
+                    overseerr_url: overseerrUrl,
+                    overseerr_api_key: overseerrApiKey,
+                    site_name: document.getElementById('site_name').value.trim(),
+                    admin_email: document.getElementById('admin_email').value.trim(),
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Submit the configuration
+                fetch('/api/setup/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        setupForm.classList.add('hidden');
+                        setupSuccess.classList.remove('hidden');
+                        
+                        // Redirect to home page after a delay
+                        setTimeout(function() {
+                            window.location.href = '/';
+                        }, 5000);
+                    } else {
+                        setupForm.classList.add('hidden');
+                        setupError.classList.remove('hidden');
+                        errorDetails.textContent = data.message || 'There was an error saving your configuration. Please try again.';
+                    }
+                })
+                .catch(error => {
+                    setupForm.classList.add('hidden');
+                    setupError.classList.remove('hidden');
+                    errorDetails.textContent = 'Network error. Please check your connection and try again.';
+                    console.error('Error:', error);
+                });
+            });
+            
+            retrySetupButton.addEventListener('click', function() {
+                setupError.classList.add('hidden');
+                setupForm.classList.remove('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
