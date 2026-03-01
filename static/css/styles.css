@@ -175,14 +175,28 @@ main {
 
 .status-circle.online {
     background-color: var(--success-color);
+    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2);
+    transition: background-color 0.4s, box-shadow 0.4s;
 }
 
 .status-circle.offline {
     background-color: var(--error-color);
+    transition: background-color 0.4s;
 }
 
 .status-circle.error {
     background-color: var(--warning-color);
+    transition: background-color 0.4s;
+}
+
+.status-circle.checking {
+    background-color: var(--primary-color);
+    animation: statusPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.55; transform: scale(0.82); }
 }
 
 .server-details {
@@ -455,6 +469,63 @@ main {
 .error-message {
     background-color: rgba(220, 53, 69, 0.1);
     border: 1px solid var(--error-color);
+}
+
+/* ── Performance & UX improvements ── */
+
+/* Smooth section entry */
+main > section {
+    animation: sectionFadeIn 0.35s ease both;
+}
+@keyframes sectionFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* Button press feedback */
+.btn-primary:active, .btn-secondary:active, .btn-request:active {
+    transform: scale(0.97);
+    opacity: 0.85;
+}
+.btn-primary, .btn-secondary, .btn-request {
+    transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.btn-primary:hover  { box-shadow: 0 3px 10px rgba(229,160,13,0.35); }
+.btn-secondary:hover { box-shadow: 0 2px 8px rgba(229,160,13,0.2); }
+
+/* Search input focus ring */
+#search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(229,160,13,0.15);
+}
+
+/* Loading shimmer for result cards */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #888;
+}
+.loading::before {
+    content: '';
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid #ddd;
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Feature card hover lift */
+.feature-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.feature-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
 
 /* Responsive Adjustments */

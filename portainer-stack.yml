@@ -1,0 +1,111 @@
+# ============================================================
+#  Plex Portal – Portainer Stack
+# ============================================================
+#
+#  HOW TO DEPLOY IN PORTAINER
+#  ──────────────────────────
+#  1. Open Portainer → Stacks → + Add stack
+#  2. Give it a name (e.g. "plex-portal")
+#  3. Paste this entire file into the "Web editor" box
+#     -OR- upload this file directly
+#  4. Scroll down to "Environment variables" and fill in:
+#       DB_PASSWORD          (any strong password)
+#       MYSQL_ROOT_PASSWORD  (any strong password)
+#  5. Click "Deploy the stack"
+#  6. Visit http://<your-server-ip>:5000 — the setup wizard
+#     will walk you through the rest in ~2 minutes.
+#
+#  UPDATING
+#  ────────
+#  Pull the latest image / re-deploy the stack to update.
+#  Your configuration and database are stored in Docker
+#  volumes and will NOT be lost on redeploy.
+#
+#  RESETTING THE WIZARD
+#  ────────────────────
+#  docker exec plex-portal rm -f /app/src/data/setup_complete.json
+#  docker restart plex-portal
+# ============================================================
+
+version: '3.8'
+
+services:
+
+  # ── Application ──────────────────────────────────────────
+  plex-portal:
+    image: ghcr.io/cl00dz/plex-portal:latest   # swap for your own image tag if self-building
+    # To build locally instead of pulling an image, replace the
+    # "image:" line above with:
+    #   build: .
+    container_name: plex-portal
+    restart: unless-stopped
+    ports:
+      - "5000:5000"          # Change the LEFT number to use a different host port
+    environment:
+      # ── Security ───────────────────────────────────────────
+      # Leave SECRET_KEY blank to auto-generate one on first run
+      # (recommended for home lab — it is persisted in the data volume)
+      - SECRET_KEY=
+      - DEBUG=False
+
+      # ── Performance ────────────────────────────────────────
+      # 2 workers is fine for home lab. Raise to 4 on beefier hardware.
+      - GUNICORN_WORKERS=2
+
+      # ── Plex & Overseerr (optional here) ───────────────────
+      # You can leave these blank and configure them through the
+      # setup wizard instead. If you set them here they take
+      # priority over the wizard on restart.
+      - PLEX_SERVER_URL=
+      - PLEX_TOKEN=
+      - OVERSEERR_URL=
+      - OVERSEERR_API_KEY=
+
+      # ── Database ───────────────────────────────────────────
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USERNAME=plex_portal
+      - DB_PASSWORD=${DB_PASSWORD:-change_me_now}   # ← SET THIS
+      - DB_NAME=plex_portal_db
+    volumes:
+      - plex-portal-data:/app/src/data
+    networks:
+      - plex-net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Database ─────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: plex-portal-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-change_me_now}   # ← SET THIS
+      - MYSQL_DATABASE=plex_portal_db
+      - MYSQL_USER=plex_portal
+      - MYSQL_PASSWORD=${DB_PASSWORD:-change_me_now}                # ← SAME AS ABOVE
+    volumes:
+      - plex-portal-db:/var/lib/mysql
+    networks:
+      - plex-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+networks:
+  plex-net:
+    driver: bridge
+
+volumes:
+  plex-portal-db:
+  plex-portal-data:

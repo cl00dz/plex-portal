@@ -1,231 +1,592 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plex Portal Setup - Initial Configuration</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        .setup-container {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 30px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .setup-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .setup-header img {
-            max-width: 150px;
-            margin-bottom: 20px;
-        }
-        
-        .setup-form {
-            margin-top: 30px;
-        }
-        
-        .form-section {
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .form-section:last-child {
-            border-bottom: none;
-        }
-        
-        .form-section h3 {
-            margin-bottom: 15px;
-            color: #e5a00d;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-actions {
-            display: flex;
-            justify-content: center;
-            margin-top: 40px;
-        }
-        
-        .btn-primary {
-            padding: 12px 30px;
-            font-size: 16px;
-        }
-        
-        .setup-footer {
-            text-align: center;
-            margin-top: 30px;
-            color: #777;
-            font-size: 14px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plex Portal – Setup Wizard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #1a1c1e 0%, #282a2d 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.45);
+      width: 100%;
+      max-width: 560px;
+      overflow: hidden;
+    }
+
+    /* ── Header bar ── */
+    .card-header {
+      background: #1e2022;
+      padding: 20px 28px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .brand-icon { font-size: 28px; }
+    .brand-name { color: #e5a00d; font-size: 18px; font-weight: 700; letter-spacing: -.2px; }
+
+    /* ── Step tabs ── */
+    .steps { display: flex; }
+    .step-tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px 4px 10px;
+      position: relative;
+      user-select: none;
+    }
+    .step-tab::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: transparent;
+      transition: background .3s;
+    }
+    .step-tab.active::after { background: #e5a00d; }
+    .step-tab.done::after   { background: #28a745; }
+
+    .step-bubble {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: #3a3d42;
+      color: #888;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 4px;
+      transition: background .3s, color .3s;
+    }
+    .step-tab.active .step-bubble { background: #e5a00d; color: #fff; }
+    .step-tab.done   .step-bubble { background: #28a745; color: #fff; }
+
+    .step-label {
+      display: block;
+      font-size: 10px;
+      color: #666;
+      white-space: nowrap;
+    }
+    .step-tab.active .step-label,
+    .step-tab.done   .step-label { color: #aaa; }
+
+    /* ── Body ── */
+    .card-body { padding: 28px; }
+
+    /* ── Panels ── */
+    .panel { display: none; }
+    .panel.active {
+      display: block;
+      animation: slideIn .22s ease;
+    }
+    .panel.slide-back { animation: slideBack .22s ease; }
+    @keyframes slideIn  { from { opacity:0; transform:translateX(14px); } to { opacity:1; transform:none; } }
+    @keyframes slideBack { from { opacity:0; transform:translateX(-14px); } to { opacity:1; transform:none; } }
+
+    /* ── Typography ── */
+    .panel-title { font-size: 21px; font-weight: 700; color: #1a1c1e; margin-bottom: 5px; }
+    .panel-sub   { font-size: 13.5px; color: #666; line-height: 1.55; margin-bottom: 22px; }
+
+    /* ── Checklist (step 1) ── */
+    .checklist { list-style: none; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #f7f7f7;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      font-size: 13.5px;
+    }
+    .ci { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .checklist li strong { display: block; color: #1a1c1e; margin-bottom: 2px; }
+    .checklist li span   { color: #666; }
+
+    /* ── Fields ── */
+    .field { margin-bottom: 18px; }
+    .field-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px;
+    }
+    .badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+    .badge-req { background: #fce8e8; color: #c33; }
+    .badge-opt { background: #ebebeb; color: #666; }
+
+    .field input {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid #ddd;
+      border-radius: 9px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .field input:focus {
+      border-color: #e5a00d;
+      box-shadow: 0 0 0 3px rgba(229,160,13,.15);
+    }
+
+    .field-hint { margin-top: 5px; font-size: 12px; color: #888; }
+    .field-hint a    { color: #e5a00d; }
+    .field-hint code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+
+    /* ── Test row ── */
+    .test-row {
+      display: flex; align-items: center; gap: 12px;
+      margin: -6px 0 18px;
+    }
+    .btn-test {
+      padding: 7px 16px;
+      background: #f2f2f2;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      transition: background .15s, border-color .15s;
+      flex-shrink: 0;
+    }
+    .btn-test:hover:not(:disabled) { background: #e8e8e8; border-color: #bbb; }
+    .btn-test:disabled { opacity: .5; cursor: not-allowed; }
+
+    .test-msg {
+      font-size: 12.5px; font-weight: 500;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .test-msg.ok   { color: #1a8a37; }
+    .test-msg.fail { color: #c0392b; }
+    .test-msg.busy { color: #888; }
+
+    /* ── Spinner ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block; width: 13px; height: 13px;
+      border: 2px solid #ccc; border-top-color: #888;
+      border-radius: 50%; animation: spin .65s linear infinite; flex-shrink: 0;
+    }
+
+    /* ── Summary (step 4) ── */
+    .summary { background: #f9f9f9; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .summary-row {
+      display: flex; align-items: flex-start;
+      padding: 10px 14px; font-size: 13.5px;
+      border-bottom: 1px solid #eee;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-key  { width: 130px; flex-shrink: 0; font-weight: 600; color: #555; }
+    .summary-val  { color: #1a1c1e; word-break: break-all; }
+    .summary-skip { color: #aaa; font-style: italic; }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 24px; padding-top: 18px; border-top: 1px solid #eee;
+    }
+    .btn-back {
+      padding: 9px 18px;
+      background: transparent; border: 1.5px solid #ddd; border-radius: 9px;
+      font-size: 13.5px; font-weight: 600; color: #555; cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-back:hover { background: #f5f5f5; border-color: #aaa; }
+
+    .btn-next {
+      padding: 10px 22px;
+      background: #e5a00d; border: none; border-radius: 9px;
+      font-size: 14px; font-weight: 700; color: #fff; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background .15s, transform .15s, box-shadow .15s;
+    }
+    .btn-next:hover:not(:disabled) {
+      background: #c98c00;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(229,160,13,.35);
+    }
+    .btn-next:active { transform: none; }
+    .btn-next:disabled { opacity: .6; cursor: not-allowed; }
+
+    .btn-skip {
+      background: none; border: none;
+      font-size: 12.5px; color: #999; cursor: pointer;
+      text-decoration: underline; padding: 4px;
+    }
+    .btn-skip:hover { color: #555; }
+
+    /* ── Success ── */
+    .success-state { text-align: center; padding: 10px 0 4px; }
+    .success-icon  { font-size: 58px; margin-bottom: 12px; }
+    .success-state h2 { color: #1a8a37; margin-bottom: 8px; }
+    .success-state p  { color: #555; font-size: 14px; margin-bottom: 14px; }
+    .progress-outer {
+      height: 5px; background: #eee; border-radius: 3px;
+      overflow: hidden; max-width: 180px; margin: 0 auto;
+    }
+    .progress-inner { height: 100%; background: #28a745; border-radius: 3px; transition: width .1s linear; }
+
+    /* ── Shake ── */
+    @keyframes shake {
+      0%,100% { transform:translateX(0); }
+      20%,60%  { transform:translateX(-5px); }
+      40%,80%  { transform:translateX(5px); }
+    }
+    .shake { animation: shake .35s ease; }
+
+    @media (max-width: 480px) {
+      .card-body { padding: 20px; }
+      .step-label { display: none; }
+    }
+  </style>
 </head>
 <body>
-    <div class="setup-container">
-        <div class="setup-header">
-            <img src="https://cdn-icons-png.flaticon.com/512/732/732204.png" alt="Plex Logo" onerror="this.src='/static/images/plex-logo-placeholder.png'">
-            <h1>Welcome to Plex Portal</h1>
-            <p>Complete this initial setup to configure your Plex Portal application.</p>
-        </div>
-        
-        <div id="setup-form" class="setup-form">
-            <div class="form-section">
-                <h3>Plex Server Configuration</h3>
-                <p>Enter your Plex server details to enable server status monitoring and authentication.</p>
-                
-                <div class="form-group">
-                    <label for="plex_server_url">Plex Server URL *</label>
-                    <input type="text" id="plex_server_url" name="plex_server_url" placeholder="http://your-plex-server:32400" required>
-                    <small>The full URL to your Plex server, including port number.</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="plex_token">Plex Token *</label>
-                    <input type="text" id="plex_token" name="plex_token" placeholder="Your Plex authentication token" required>
-                    <small>Your Plex authentication token. <a href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/" target="_blank">How to find your token</a></small>
-                </div>
-            </div>
-            
-            <div class="form-section">
-                <h3>Overseerr Integration</h3>
-                <p>Configure Overseerr integration to enable content requests through Plex Portal.</p>
-                
-                <div class="form-group">
-                    <label for="overseerr_url">Overseerr URL *</label>
-                    <input type="text" id="overseerr_url" name="overseerr_url" placeholder="http://your-overseerr-server:5055" required>
-                    <small>The full URL to your Overseerr instance, including port number.</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="overseerr_api_key">Overseerr API Key *</label>
-                    <input type="text" id="overseerr_api_key" name="overseerr_api_key" placeholder="Your Overseerr API key" required>
-                    <small>Your Overseerr API key. This can be found in Overseerr under Settings > General.</small>
-                </div>
-            </div>
-            
-            <div class="form-section">
-                <h3>Additional Settings</h3>
-                <p>These settings are optional and can be configured later through environment variables.</p>
-                
-                <div class="form-group">
-                    <label for="site_name">Site Name</label>
-                    <input type="text" id="site_name" name="site_name" placeholder="My Plex Portal">
-                    <small>The name of your Plex Portal instance, displayed in the header.</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="admin_email">Admin Email</label>
-                    <input type="email" id="admin_email" name="admin_email" placeholder="admin@example.com">
-                    <small>The administrator's email address for notifications (optional).</small>
-                </div>
-            </div>
-            
-            <div class="form-actions">
-                <button type="button" id="save-setup" class="btn-primary">Save Configuration</button>
-            </div>
-        </div>
-        
-        <div id="setup-success" class="hidden">
-            <div class="success-message">
-                <h2>Setup Completed Successfully!</h2>
-                <p>Your Plex Portal has been configured and is ready to use.</p>
-                <p>The application will now restart to apply your configuration.</p>
-                <p>You will be redirected to the main page in a few seconds...</p>
-            </div>
-        </div>
-        
-        <div id="setup-error" class="hidden">
-            <div class="error-message">
-                <h2>Setup Error</h2>
-                <p id="error-details">There was an error saving your configuration. Please try again.</p>
-                <button type="button" id="retry-setup" class="btn-primary">Try Again</button>
-            </div>
-        </div>
-        
-        <div class="setup-footer">
-            <p>Plex Portal - Version 1.0.0</p>
-            <p>Plex, the Plex Play logo and Plex Media Server are trademarks of Plex and used under a license.</p>
-        </div>
+<div class="card">
+
+  <div class="card-header">
+    <div class="brand">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-name">Plex Portal</span>
+    </div>
+    <div class="steps">
+      <div class="step-tab active" id="tab-1">
+        <div class="step-bubble" id="bub-1">1</div>
+        <span class="step-label">Welcome</span>
+      </div>
+      <div class="step-tab" id="tab-2">
+        <div class="step-bubble" id="bub-2">2</div>
+        <span class="step-label">Plex</span>
+      </div>
+      <div class="step-tab" id="tab-3">
+        <div class="step-bubble" id="bub-3">3</div>
+        <span class="step-label">Overseerr</span>
+      </div>
+      <div class="step-tab" id="tab-4">
+        <div class="step-bubble" id="bub-4">4</div>
+        <span class="step-label">Finish</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body">
+
+    <!-- Step 1 – Welcome -->
+    <div class="panel active" id="panel-1">
+      <h2 class="panel-title">Welcome! 👋</h2>
+      <p class="panel-sub">Let's get your Plex Portal running in about 2 minutes. Here's what you'll need:</p>
+      <ul class="checklist">
+        <li>
+          <span class="ci">🖥️</span>
+          <div>
+            <strong>Plex Server URL &amp; Token</strong>
+            <span>The IP address of your Plex server and your authentication token</span>
+          </div>
+        </li>
+        <li>
+          <span class="ci">🎯</span>
+          <div>
+            <strong>Overseerr URL &amp; API Key <em style="font-weight:400">(optional)</em></strong>
+            <span>Lets users request movies and TV shows — you can skip this and add it later</span>
+          </div>
+        </li>
+      </ul>
+      <div class="nav" style="justify-content:flex-end;border-top:none;padding-top:10px;margin-top:20px">
+        <button class="btn-next" onclick="goTo(2,false)">Get Started &rarr;</button>
+      </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const saveSetupButton = document.getElementById('save-setup');
-            const retrySetupButton = document.getElementById('retry-setup');
-            const setupForm = document.getElementById('setup-form');
-            const setupSuccess = document.getElementById('setup-success');
-            const setupError = document.getElementById('setup-error');
-            const errorDetails = document.getElementById('error-details');
-            
-            saveSetupButton.addEventListener('click', function() {
-                // Validate form
-                const plexServerUrl = document.getElementById('plex_server_url').value.trim();
-                const plexToken = document.getElementById('plex_token').value.trim();
-                const overseerrUrl = document.getElementById('overseerr_url').value.trim();
-                const overseerrApiKey = document.getElementById('overseerr_api_key').value.trim();
-                
-                if (!plexServerUrl || !plexToken || !overseerrUrl || !overseerrApiKey) {
-                    errorDetails.textContent = 'Please fill in all required fields.';
-                    setupForm.classList.add('hidden');
-                    setupError.classList.remove('hidden');
-                    return;
-                }
-                
-                // Collect form data
-                const formData = {
-                    plex_server_url: plexServerUrl,
-                    plex_token: plexToken,
-                    overseerr_url: overseerrUrl,
-                    overseerr_api_key: overseerrApiKey,
-                    site_name: document.getElementById('site_name').value.trim(),
-                    admin_email: document.getElementById('admin_email').value.trim(),
-                    timestamp: new Date().toISOString()
-                };
-                
-                // Submit the configuration
-                fetch('/api/setup/save', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        setupForm.classList.add('hidden');
-                        setupSuccess.classList.remove('hidden');
-                        
-                        // Redirect to home page after a delay
-                        setTimeout(function() {
-                            window.location.href = '/';
-                        }, 5000);
-                    } else {
-                        setupForm.classList.add('hidden');
-                        setupError.classList.remove('hidden');
-                        errorDetails.textContent = data.message || 'There was an error saving your configuration. Please try again.';
-                    }
-                })
-                .catch(error => {
-                    setupForm.classList.add('hidden');
-                    setupError.classList.remove('hidden');
-                    errorDetails.textContent = 'Network error. Please check your connection and try again.';
-                    console.error('Error:', error);
-                });
-            });
-            
-            retrySetupButton.addEventListener('click', function() {
-                setupError.classList.add('hidden');
-                setupForm.classList.remove('hidden');
-            });
-        });
-    </script>
+    <!-- Step 2 – Plex -->
+    <div class="panel" id="panel-2">
+      <h2 class="panel-title">🖥️ Connect to Plex</h2>
+      <p class="panel-sub">Enter your Plex server address and token so the portal can connect to it.</p>
+
+      <div class="field">
+        <div class="field-label">Server URL <span class="badge badge-req">Required</span></div>
+        <input type="url" id="plex_url" placeholder="http://192.168.1.100:32400"
+               autocomplete="off" spellcheck="false">
+        <p class="field-hint">Usually <code>http://&lt;your-server-ip&gt;:32400</code></p>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Plex Token <span class="badge badge-req">Required</span></div>
+        <input type="password" id="plex_token" placeholder="Your Plex authentication token"
+               autocomplete="new-password" spellcheck="false">
+        <p class="field-hint">
+          Not sure where to find it?
+          <a href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/"
+             target="_blank" rel="noopener">Step-by-step guide ↗</a>
+        </p>
+      </div>
+
+      <div class="test-row">
+        <button class="btn-test" id="btn-tp" onclick="testPlex()">🔍 Test Connection</button>
+        <span class="test-msg" id="plex-msg"></span>
+      </div>
+
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(1,true)">&larr; Back</button>
+        <button class="btn-next" onclick="nextFromPlex()">Next &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 3 – Overseerr -->
+    <div class="panel" id="panel-3">
+      <h2 class="panel-title">🎯 Overseerr <span style="font-size:14px;font-weight:400;color:#888">(optional)</span></h2>
+      <p class="panel-sub">Overseerr lets your users browse and request movies &amp; TV shows. You can skip this now and set it up later.</p>
+
+      <div class="field">
+        <div class="field-label">Overseerr URL <span class="badge badge-opt">Optional</span></div>
+        <input type="url" id="ov_url" placeholder="http://192.168.1.100:5055"
+               autocomplete="off" spellcheck="false">
+        <p class="field-hint">Usually <code>http://&lt;your-server-ip&gt;:5055</code></p>
+      </div>
+
+      <div class="field">
+        <div class="field-label">API Key <span class="badge badge-opt">Optional</span></div>
+        <input type="password" id="ov_key" placeholder="Your Overseerr API key"
+               autocomplete="new-password" spellcheck="false">
+        <p class="field-hint">Found in Overseerr → Settings → General → API Key</p>
+      </div>
+
+      <div class="test-row">
+        <button class="btn-test" id="btn-to" onclick="testOverseerr()">🔍 Test Connection</button>
+        <span class="test-msg" id="ov-msg"></span>
+      </div>
+
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(2,true)">&larr; Back</button>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn-skip" onclick="skipOverseerr()">Skip for now</button>
+          <button class="btn-next" onclick="nextFromOverseerr()">Next &rarr;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4 – Finish -->
+    <div class="panel" id="panel-4">
+      <h2 class="panel-title">✅ Almost Done!</h2>
+      <p class="panel-sub">Review your settings, then hit <strong>Save &amp; Launch</strong>.</p>
+
+      <div class="summary" id="summary"></div>
+
+      <div class="field">
+        <div class="field-label">Portal Name <span class="badge badge-opt">Optional</span></div>
+        <input type="text" id="site_name" placeholder="My Plex Server" autocomplete="off">
+        <p class="field-hint">Shown in the header. Leave blank to use the default.</p>
+      </div>
+
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(3,true)">&larr; Back</button>
+        <button class="btn-next" id="btn-save" onclick="saveSetup()">🚀 Save &amp; Launch</button>
+      </div>
+    </div>
+
+    <!-- Success -->
+    <div class="panel" id="panel-ok">
+      <div class="success-state">
+        <div class="success-icon">🎉</div>
+        <h2>You're all set!</h2>
+        <p>Plex Portal is configured and ready.<br>Taking you to the home page now…</p>
+        <div class="progress-outer">
+          <div class="progress-inner" id="redirect-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let current = 1;
+
+  function goTo(next, back) {
+    const from = current;
+    const fromPanel = document.getElementById('panel-' + from);
+    fromPanel.classList.remove('active', 'slide-back');
+    document.getElementById('tab-' + from).classList.remove('active');
+
+    if (next > from) {
+      document.getElementById('tab-' + from).classList.add('done');
+      document.getElementById('bub-' + from).textContent = '✓';
+    } else {
+      document.getElementById('tab-' + next).classList.remove('done');
+      document.getElementById('bub-' + next).textContent = next;
+    }
+
+    current = next;
+    const panel = document.getElementById('panel-' + current);
+    panel.classList.add('active');
+    if (back) panel.classList.add('slide-back');
+    document.getElementById('tab-' + current).classList.add('active');
+
+    if (next === 4) buildSummary();
+  }
+
+  function nextFromPlex() {
+    if (!val('plex_url') || !val('plex_token')) {
+      setMsg('plex-msg', 'fail', '✗ Please fill in both fields');
+      shake('panel-2');
+      return;
+    }
+    goTo(3, false);
+  }
+
+  function nextFromOverseerr() {
+    const u = val('ov_url'), k = val('ov_key');
+    if ((u && !k) || (!u && k)) {
+      setMsg('ov-msg', 'fail', '✗ Fill in both fields, or use Skip');
+      shake('panel-3');
+      return;
+    }
+    goTo(4, false);
+  }
+
+  function skipOverseerr() {
+    document.getElementById('ov_url').value = '';
+    document.getElementById('ov_key').value = '';
+    document.getElementById('ov-msg').innerHTML = '';
+    goTo(4, false);
+  }
+
+  async function testPlex() {
+    if (!val('plex_url') || !val('plex_token')) {
+      setMsg('plex-msg', 'fail', '✗ Enter URL and token first'); return;
+    }
+    const btn = id('btn-tp');
+    btn.disabled = true;
+    setMsg('plex-msg', 'busy', '<span class="spinner"></span> Testing…');
+    try {
+      const d = await postJSON('/api/setup/test-plex',
+        { plex_server_url: val('plex_url'), plex_token: id('plex_token').value.trim() });
+      setMsg('plex-msg', d.success ? 'ok' : 'fail', (d.success ? '✓ ' : '✗ ') + d.message);
+    } catch { setMsg('plex-msg', 'fail', '✗ Network error'); }
+    btn.disabled = false;
+  }
+
+  async function testOverseerr() {
+    if (!val('ov_url') || !val('ov_key')) {
+      setMsg('ov-msg', 'fail', '✗ Enter URL and API key first'); return;
+    }
+    const btn = id('btn-to');
+    btn.disabled = true;
+    setMsg('ov-msg', 'busy', '<span class="spinner"></span> Testing…');
+    try {
+      const d = await postJSON('/api/setup/test-overseerr',
+        { overseerr_url: val('ov_url'), overseerr_api_key: id('ov_key').value.trim() });
+      setMsg('ov-msg', d.success ? 'ok' : 'fail', (d.success ? '✓ ' : '✗ ') + d.message);
+    } catch { setMsg('ov-msg', 'fail', '✗ Network error'); }
+    btn.disabled = false;
+  }
+
+  function buildSummary() {
+    const ovUrl = val('ov_url');
+    const rows = [
+      ['🖥️ Plex Server', val('plex_url') || '—'],
+      ['🔑 Plex Token',  '••••' + (id('plex_token').value.slice(-4) || '••••')],
+      ['🎯 Overseerr',  ovUrl || null],
+    ];
+    id('summary').innerHTML = rows.map(([k, v]) => {
+      const valHtml = v
+        ? `<span class="summary-val">${esc(v)}</span>`
+        : `<span class="summary-skip">not configured</span>`;
+      return `<div class="summary-row"><span class="summary-key">${k}</span>${valHtml}</div>`;
+    }).join('');
+  }
+
+  async function saveSetup() {
+    if (!val('plex_url') || !id('plex_token').value.trim()) {
+      alert('Plex Server URL and Token are required. Go back to Step 2.');
+      return;
+    }
+    const btn = id('btn-save');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Saving…';
+
+    const payload = {
+      plex_server_url:   val('plex_url'),
+      plex_token:        id('plex_token').value.trim(),
+      overseerr_url:     val('ov_url'),
+      overseerr_api_key: id('ov_key').value.trim(),
+      site_name:         val('site_name'),
+      timestamp:         new Date().toISOString(),
+    };
+
+    try {
+      const d = await postJSON('/api/setup/save', payload);
+      if (d.success) {
+        showSuccess();
+      } else {
+        alert('Error: ' + (d.message || 'Could not save. Please try again.'));
+        btn.disabled = false;
+        btn.innerHTML = '🚀 Save &amp; Launch';
+      }
+    } catch {
+      alert('Network error — please try again.');
+      btn.disabled = false;
+      btn.innerHTML = '🚀 Save &amp; Launch';
+    }
+  }
+
+  function showSuccess() {
+    for (let i = 1; i <= 4; i++) {
+      id('tab-' + i).classList.remove('active');
+      id('tab-' + i).classList.add('done');
+      id('bub-' + i).textContent = '✓';
+    }
+    id('panel-4').classList.remove('active');
+    id('panel-ok').classList.add('active');
+
+    let pct = 0;
+    const bar = id('redirect-bar');
+    const iv = setInterval(() => {
+      pct += 2;
+      bar.style.width = pct + '%';
+      if (pct >= 100) { clearInterval(iv); window.location.href = '/'; }
+    }, 100);
+  }
+
+  /* ── helpers ── */
+  function id(x)  { return document.getElementById(x); }
+  function val(x) { return id(x).value.trim(); }
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function setMsg(elId, type, html) {
+    const el = id(elId);
+    el.className = 'test-msg ' + type;
+    el.innerHTML = html;
+  }
+
+  function shake(panelId) {
+    const el = id(panelId);
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+    el.addEventListener('animationend', () => el.classList.remove('shake'), { once: true });
+  }
+
+  async function postJSON(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+</script>
 </body>
 </html>

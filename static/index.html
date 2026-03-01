@@ -126,40 +126,43 @@
         });
         
         function checkServerStatus() {
-            const statusIndicator = document.getElementById('status-indicator');
-            const statusCircle = statusIndicator.querySelector('.status-circle');
+            const statusCircle = document.querySelector('.status-circle');
             const statusText = document.getElementById('status-text');
             const serverDetails = document.getElementById('server-details');
-            
+
+            // Pulsing "checking" state while the request is in flight
+            statusCircle.className = 'status-circle checking';
+            statusText.textContent = 'Checking…';
+
             fetch('/api/plex/status')
                 .then(response => response.json())
                 .then(data => {
+                    statusCircle.className = 'status-circle';
                     if (data.status === 'online') {
                         statusCircle.classList.add('online');
                         statusText.textContent = 'Server Online';
                         serverDetails.classList.remove('hidden');
-                        
-                        // If server info is available, populate it
-                        if (data.server_info) {
-                            document.getElementById('server-name').textContent = data.server_info.friendlyName || 'Plex Server';
-                            document.getElementById('server-version').textContent = data.server_info.version || '-';
-                            document.getElementById('server-platform').textContent = data.server_info.platform || '-';
-                            
-                            // Format the updated date if available
-                            if (data.server_info.updatedAt) {
-                                const date = new Date(data.server_info.updatedAt);
-                                document.getElementById('server-updated').textContent = date.toLocaleString();
-                            }
+
+                        const info = data.server_info || {};
+                        document.getElementById('server-name').textContent     = info.friendlyName || 'Plex Server';
+                        document.getElementById('server-version').textContent  = info.version || '-';
+                        document.getElementById('server-platform').textContent = info.platform || '-';
+                        if (info.updatedAt) {
+                            document.getElementById('server-updated').textContent =
+                                new Date(Number(info.updatedAt) * 1000 || info.updatedAt).toLocaleString();
                         }
+                    } else if (data.status === 'unconfigured') {
+                        statusCircle.classList.add('error');
+                        statusText.textContent = 'Not Configured';
+                        serverDetails.classList.add('hidden');
                     } else {
                         statusCircle.classList.add('offline');
                         statusText.textContent = data.status === 'error' ? 'Server Error' : 'Server Offline';
                         serverDetails.classList.add('hidden');
                     }
                 })
-                .catch(error => {
-                    console.error('Error checking server status:', error);
-                    statusCircle.classList.add('error');
+                .catch(() => {
+                    statusCircle.className = 'status-circle error';
                     statusText.textContent = 'Status Check Failed';
                     serverDetails.classList.add('hidden');
                 });

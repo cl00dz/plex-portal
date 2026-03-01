@@ -4,13 +4,24 @@ set -e
 # Create data directory if it doesn't exist
 mkdir -p /app/src/data
 
-# Check if setup has been completed
+# Print startup message
 if [ ! -f "/app/src/data/setup_complete.json" ]; then
-    echo "Initial setup required. The setup wizard will be available at http://localhost:5000/api/setup/setup"
-    echo "Please complete the setup to configure your Plex Portal."
+    echo "============================================================"
+    echo "  First-time setup required!"
+    echo "  Open http://<your-server-ip>:${PORT:-5000} to run the"
+    echo "  setup wizard — it only takes about 2 minutes."
+    echo "============================================================"
 else
-    echo "Setup already completed. Loading configuration from file."
+    echo "Setup complete. Starting Plex Portal..."
 fi
 
-# Start the application
-exec python -m src.main
+# Start with Gunicorn (production WSGI server)
+# Workers: 2×CPU+1 is a common rule of thumb; default to 2 for low-spec servers.
+exec gunicorn \
+    --workers "${GUNICORN_WORKERS:-2}" \
+    --bind "0.0.0.0:${PORT:-5000}" \
+    --timeout 120 \
+    --preload \
+    --access-logfile - \
+    --error-logfile - \
+    "src.main:app"
